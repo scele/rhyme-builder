@@ -1,0 +1,24 @@
+{
+  "name": "react-seed",
+  "version": "1.0.0",
+  "description": "",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "./node_modules/.bin/babel-node server.js",
+    "build": "node node_modules/babel-cli/bin/babel.js src --out-dir build --source-maps",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "babel-cli": "^6.22.2",
+    "babel-preset-es2015-node6": "^0.4.0",
+    "eslint": "^3.14.1"
+  },
+  "dependencies": {
+    "body-parser": "^1.16.0",
+    "express": "^4.14.1",
+    "jsonfile": "^2.4.0"
+  }
+}
