@@ -1,6 +1,9 @@
 import express from 'express';
 import jsonfile from 'jsonfile';
 import bodyParser from 'body-parser';
+import fs from 'fs';
+import path from 'path';
+import { flow, filter, orderBy, take, uniqBy } from 'lodash/fp';
 
 const app = express();
 
@@ -15,8 +18,73 @@ const allowCrossDomain = function (req, res, next) {
 };
 app.use(allowCrossDomain);
 app.use(bodyParser.json());
+app.set('json spaces', 2);
+
+const getActors = () => fs.readdirSync('data').filter(file => fs.statSync(path.join('data', file)).isDirectory());
+const getVideos = (actor) => fs.readdirSync(path.join('data', actor));
+const getWords = (actor, video) => {
+  const contents = fs.readFileSync(`data/${actor}/${video}`, 'utf8');
+  const matches = contents.toLowerCase().match(/[\d:]+|[\w\u00C0-\u00D6\u00D8-\u00F6]+/gu);
+  let time = 0;
+  for (let match of matches) {
+    if (match.match(/[\d:]+/gu)) {
+      time = match;
+      continue;
+    }
+    let w = words[match] || [];
+    let obj = {
+      actor: actor,
+      video: video,
+      time: time,
+    }
+    words[match] = [...w, obj];
+  }
+};
+
+const buildRhymes = (words) => {
+  let rhymes = {};
+  for (let word in words) {
+    for (let i = 0; i < word.length; i++) {
+      const rhyme = word.substring(i);
+      const r = rhymes[rhyme] || { rhyme: rhyme, total: 0, words: [] };
+      r.total += words[word].length;
+      r.words.push(word);
+      rhymes[rhyme] = r; 
+    }
+  }
+  // Take the longest rhymes with more than one word in them.
+  return flow(
+    // Skip rhymes that are too short have too few word instances.
+    filter(x => x.words.length > 1 && x.rhyme.length > 3),
+    // Remove shorter rhymes with identical word list.
+    // For example, if we have (ation, [information, station]) as a rhyme, we should not report
+    // (tion, [information, station]), but should report (tion, [information, station, petition]).
+    orderBy(x => x.rhyme.length, 'desc'),
+    uniqBy(x => x.words.join('-')),
+  )(rhymes);
+};
+
+
+let words = {};
+getActors().map(a => getVideos(a).map(v => getWords(a, v)));
+const rhymes = buildRhymes(words);
 
 app.use('/', express.static('client/build'));
+app.use('/data', express.static('data'));
+app.get('/api/rhymes', (req, res) => {
+  res.json(rhymes);
+});
+app.get('/api/words', (req, res) => {
+  res.json(words);
+});
+app.get('/api/data', (req, res) => {
+  res.json(getActors().map(a => {
+    return {
+      name: a,
+      videos: getVideos(a).map((x) => `/data/${a}/${x}`)
+    };
+  }));
+});
 app.get('/api/version', (req, res) => {
   res.json({ version: jsonfile.readFileSync('package.json').version });
 });
