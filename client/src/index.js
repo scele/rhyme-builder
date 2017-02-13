@@ -13,7 +13,7 @@ import createLogger from 'redux-logger';
 import App from './App';
 import './index.css';
 import rootReducer from './reducers';
-import { loadVersion } from './actions';
+import { loadVersion, loadData } from './actions';
 
 const store = createStore(
   rootReducer,
@@ -23,6 +23,7 @@ const store = createStore(
 );
 
 store.dispatch(loadVersion());
+store.dispatch(loadData());
 
 ReactDOM.render(
   <Provider store={store}>
