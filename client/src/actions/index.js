@@ -35,12 +35,23 @@ const fetchJson = (path) =>
     .then(checkStatus)
     .then(parseJSON);
 
-export const setEditorState = (editorState) => (dispatch) => {
+export const setEditorState = (editorState) => (dispatch) =>
   dispatch({
     type: 'SET_EDITOR_STATE',
     editorState: editorState,
-  })
-};
+  });
+
+export const selectWord = (word) => (dispatch) =>
+  dispatch({
+    type: 'SELECT_WORD',
+    word: word,
+  });
+
+export const selectRhyme = (word) => (dispatch) =>
+  dispatch({
+    type: 'SELECT_RHYME',
+    word: word,
+  });
 
 export const loadData = () => (dispatch) => {
   Promise.all([

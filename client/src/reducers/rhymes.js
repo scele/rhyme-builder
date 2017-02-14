@@ -1,11 +1,5 @@
 import { EditorState } from 'draft-js';
-import { flow, keys, filter } from 'lodash/fp';
-
-const initialState = {
-  editor: EditorState.createEmpty(),
-  currentWord: '',
-  currentWordMatches: [],
-};
+import { flow, keys, filter, contains, map, flatten, uniq } from 'lodash/fp';
 
 const getMatchingWords = (search, words) =>
   flow(
@@ -29,7 +23,7 @@ const getSelectedText = (editorState) => {
   return currentContentBlock.getText().slice(start, end);
 };
 
-const getCurrentWord = (editorState) => {
+const getEditorWord = (editorState) => {
   let selectionState = editorState.getSelection();
   let anchorKey = selectionState.getAnchorKey();
   let currentContent = editorState.getCurrentContent();
@@ -44,22 +38,70 @@ const getCurrentWord = (editorState) => {
   return text.slice(start, end);
 };
 
+
+const initialState = {
+  editor: EditorState.createEmpty(),
+  editorWord: undefined,
+  currentWords: [],
+  selectedWord: undefined,
+  currentWordInstances: [],
+  currentRhymes: [],
+  selectedRhyme: undefined,
+  currentRhymeInstances: [],
+};
+
+const computeState = (state, modification) => {
+  state = {
+    ...state,
+    ...modification,
+  };
+  
+  // Words and word instances.
+  state.currentWords = state.editorWord ? getStartingWords(state.editorWord, state.words) : [];
+  if (state.selectedWord && !contains(state.selectedWord)(state.currentWords)) {
+    state.selectedWord = undefined;
+  }
+  if (state.currentWords.length === 1) {
+    state.selectedWord = state.currentWords[0];
+  }
+  state.currentWordInstances = state.selectedWord ? state.words[state.selectedWord] : [];
+  
+  // Rhymes and rhyme instances.
+  const currentRhymes = state.selectedWord ?
+    flow(
+      filter(x => contains(state.selectedWord)(x.words)),
+      map(x => x.words),
+      flatten,
+      uniq,
+    )(state.rhymes) : [];
+  state.currentRhymes = flow(
+    map(x => ({ word: x, numInstances: state.words[x].length }))
+  )(currentRhymes);
+  if (state.selectedRhyme && !contains(state.selectedRhyme)(currentRhymes)) {
+    state.selectedRhyme = undefined;
+  }
+  if (state.currentRhymes.length === 1) {
+    state.selectedRhyme = currentRhymes[0];
+  }
+  state.currentRhymeInstances = state.selectedRhyme ? state.words[state.selectedRhyme] : [];
+
+  return state;
+};
+
 export default function rhymes(state = initialState, action) {
   switch (action.type) {
+    case 'SELECT_WORD':
+      return computeState(state, { selectedWord: action.word });
+    case 'SELECT_RHYME':
+      return computeState(state, { selectedRhyme: action.word });
     case 'SET_EDITOR_STATE':
-      const currentWord = getCurrentWord(action.editorState);
-      return {
-        ...state,
-        editor: action.editorState,
-        currentWord: currentWord,
-        currentWordMatches: currentWord.length === 0 ? [] : getStartingWords(currentWord, state.words),
-      };
+      return computeState(state, { editor: action.editorState, editorWord: getEditorWord(action.editorState) });
     case 'LOAD_DATA_SUCCESS':
       return {
+        ...state,
         words: action.words,
         rhymes: action.rhymes,
         text: '',
-        ...state,
       };
     default:
       return state;
