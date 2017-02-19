@@ -1,0 +1,7 @@
+[include]
+./src/
+./client/src/
+./client/src/reducers/
+
+[ignore]
+.*/node_modules/.*

@@ -5,6 +5,7 @@
   "main": "src/server.js",
   "scripts": {
     "start": "./node_modules/.bin/babel-node server.js",
+    "flow": "flow",
     "build": "node node_modules/babel-cli/bin/babel.js src --out-dir build --source-maps",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -14,7 +15,8 @@
   "devDependencies": {
     "babel-cli": "^6.22.2",
     "babel-preset-es2015-node6": "^0.4.0",
-    "eslint": "^3.14.1"
+    "eslint": "^3.14.1",
+    "flow-bin": "^0.39.0"
   },
   "dependencies": {
     "body-parser": "^1.16.0",

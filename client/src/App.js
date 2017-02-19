@@ -1,13 +1,31 @@
+// @flow
+
 import React from 'react';
 import { connect } from 'react-redux';
 import { setEditorState, selectWord, selectRhyme } from './actions';
 import { Editor } from 'draft-js';
 import logo from './logo.svg';
 import './App.css';
+// $FlowFixMe
 import { Table, TableBody, TableRow, TableRowColumn } from 'material-ui/Table';
 import Flex from 'jsxstyle/Flex';
+import type { State, Action, Dispatch } from './types';
 
-let App = ({ version, rhymes, onUserType, onWordSelected, onRhymeSelected }) => (
+
+type AppStateProps = {
+  rhymes: State,
+  version: { version: string },
+};
+
+type AppDispatchProps = {
+  onUserType: string => Action,
+  onWordSelected: string => Action,
+  onRhymeSelected: string => Action,
+};
+
+type AppProps = AppStateProps & AppDispatchProps;
+
+let App = ({ version, rhymes, onUserType, onWordSelected, onRhymeSelected }: AppProps) => (
   <div className="App">
     <div className="App-header">
       <img src={logo} className="App-logo" alt="logo" />
@@ -24,7 +42,7 @@ let App = ({ version, rhymes, onUserType, onWordSelected, onRhymeSelected }) => 
         <Table>
           <TableBody displayRowCheckbox={false} deselectOnClickaway={false}>
             {rhymes.currentWordInstances.map((word, i) => ( 
-              <TableRow key={rhymes.selectedWord + ' ' + i}>
+              <TableRow key={(rhymes.selectedWord || '') + ' ' + i}>
                 <TableRowColumn>{word.actor}</TableRowColumn>
               </TableRow>
             ))}
@@ -42,7 +60,7 @@ let App = ({ version, rhymes, onUserType, onWordSelected, onRhymeSelected }) => 
         <Table onRowSelection={(x) => onRhymeSelected(rhymes.currentRhymes[x[0]].word)}>
           <TableBody displayRowCheckbox={false} deselectOnClickaway={false}>
             {rhymes.currentRhymes.map((rhyme, i) => ( 
-              <TableRow key={rhymes.selectedWord + ' ' + i}>
+              <TableRow key={(rhymes.selectedWord || '') + ' ' + i}>
                 <TableRowColumn>{rhyme.word}</TableRowColumn>
                 <TableRowColumn>{rhyme.numInstances}</TableRowColumn>
               </TableRow>
@@ -52,7 +70,7 @@ let App = ({ version, rhymes, onUserType, onWordSelected, onRhymeSelected }) => 
         <Table>
           <TableBody displayRowCheckbox={false} deselectOnClickaway={false}>
             {rhymes.currentRhymeInstances.map((word, i) => ( 
-              <TableRow key={rhymes.selectedRhyme + ' ' + i}>
+              <TableRow key={[rhymes.selectedRhyme, i]}>
                 <TableRowColumn>{word.actor}</TableRowColumn>
               </TableRow>
             ))}
@@ -63,8 +81,8 @@ let App = ({ version, rhymes, onUserType, onWordSelected, onRhymeSelected }) => 
 );
 
 App = connect(
-  (state) => ({ version: state.version, rhymes: state.rhymes }),
-  (dispatch) => ({
+  (state): AppStateProps => ({ version: state.version, rhymes: state.rhymes }),
+  (dispatch: Dispatch): AppDispatchProps => ({
     onUserType: (editor) => dispatch(setEditorState(editor)),
     onWordSelected: (word) => dispatch(selectWord(word)),
     onRhymeSelected: (word) => dispatch(selectRhyme(word)),

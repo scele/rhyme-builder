@@ -1,5 +1,21 @@
+// @flow
+
 import { EditorState } from 'draft-js';
-import { flow, keys, filter, contains, map, flatten, uniq } from 'lodash/fp';
+import { flow, keys, filter, includes, map, flatten, uniq } from 'lodash/fp';
+import type { State } from '../types';
+
+const initialState: State = {
+  editor: EditorState.createEmpty(),
+  editorWord: undefined,
+  currentWords: [],
+  selectedWord: undefined,
+  currentWordInstances: [],
+  currentRhymes: [],
+  selectedRhyme: undefined,
+  currentRhymeInstances: [],
+  words: {},
+  rhymes: [],
+};
 
 const getMatchingWords = (search, words) =>
   flow(
@@ -13,7 +29,7 @@ const getStartingWords = (search, words) =>
     filter((x) => x.startsWith(search))
   )(words);
 
-const getSelectedText = (editorState) => {
+const getSelectedText = (editorState): string => {
   let selectionState = editorState.getSelection();
   let anchorKey = selectionState.getAnchorKey();
   let currentContent = editorState.getCurrentContent();
@@ -23,7 +39,7 @@ const getSelectedText = (editorState) => {
   return currentContentBlock.getText().slice(start, end);
 };
 
-const getEditorWord = (editorState) => {
+const getEditorWord = (editorState): string => {
   let selectionState = editorState.getSelection();
   let anchorKey = selectionState.getAnchorKey();
   let currentContent = editorState.getCurrentContent();
@@ -38,38 +54,26 @@ const getEditorWord = (editorState) => {
   return text.slice(start, end);
 };
 
-
-const initialState = {
-  editor: EditorState.createEmpty(),
-  editorWord: undefined,
-  currentWords: [],
-  selectedWord: undefined,
-  currentWordInstances: [],
-  currentRhymes: [],
-  selectedRhyme: undefined,
-  currentRhymeInstances: [],
-};
-
-const computeState = (state, modification) => {
-  state = {
-    ...state,
+const computeState = (oldState: State, modification: $Shape<State>): State => {
+  let state: State = {
+    ...oldState,
     ...modification,
   };
   
   // Words and word instances.
   state.currentWords = state.editorWord ? getStartingWords(state.editorWord, state.words) : [];
-  if (state.selectedWord && !contains(state.selectedWord)(state.currentWords)) {
+  if (state.selectedWord && !includes(state.selectedWord)(state.currentWords)) {
     state.selectedWord = undefined;
   }
   if (state.currentWords.length === 1) {
     state.selectedWord = state.currentWords[0];
   }
   state.currentWordInstances = state.selectedWord ? state.words[state.selectedWord] : [];
-  
+
   // Rhymes and rhyme instances.
   const currentRhymes = state.selectedWord ?
     flow(
-      filter(x => contains(state.selectedWord)(x.words)),
+      filter(x => includes(state.selectedWord)(x.words)),
       map(x => x.words),
       flatten,
       uniq,
@@ -77,18 +81,18 @@ const computeState = (state, modification) => {
   state.currentRhymes = flow(
     map(x => ({ word: x, numInstances: state.words[x].length }))
   )(currentRhymes);
-  if (state.selectedRhyme && !contains(state.selectedRhyme)(currentRhymes)) {
+  if (state.selectedRhyme && !includes(state.selectedRhyme)(currentRhymes)) {
     state.selectedRhyme = undefined;
   }
   if (state.currentRhymes.length === 1) {
     state.selectedRhyme = currentRhymes[0];
   }
-  state.currentRhymeInstances = state.selectedRhyme ? state.words[state.selectedRhyme] : [];
+  state.currentRhymeInstances = state.selectedRhyme ? state.words[state.selectedRhyme.word] : [];
 
   return state;
 };
 
-export default function rhymes(state = initialState, action) {
+export default function rhymes(state: State = initialState, action: Object): State {
   switch (action.type) {
     case 'SELECT_WORD':
       return computeState(state, { selectedWord: action.word });
