@@ -2,7 +2,7 @@
 
 import { EditorState } from 'draft-js';
 import { flow, keys, filter, includes, map, flatten, uniq } from 'lodash/fp';
-import type { State } from '../types';
+import type { State, Action } from '../types';
 
 const initialState: State = {
   editor: EditorState.createEmpty(),
@@ -87,12 +87,12 @@ const computeState = (oldState: State, modification: $Shape<State>): State => {
   if (state.currentRhymes.length === 1) {
     state.selectedRhyme = currentRhymes[0];
   }
-  state.currentRhymeInstances = state.selectedRhyme ? state.words[state.selectedRhyme.word] : [];
+  state.currentRhymeInstances = state.selectedRhyme ? state.words[state.selectedRhyme] : [];
 
   return state;
 };
 
-export default function rhymes(state: State = initialState, action: Object): State {
+export default function rhymes(state: State = initialState, action: Action): State {
   switch (action.type) {
     case 'SELECT_WORD':
       return computeState(state, { selectedWord: action.word });

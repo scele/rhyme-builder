@@ -28,7 +28,7 @@ export type State = {
   selectedWord: ?string,
   currentWordInstances: Array<Word>,
   currentRhymes: SelectedRhyme[],
-  selectedRhyme: ?SelectedRhyme,
+  selectedRhyme: ?string,
   currentRhymeInstances: Array<Word>,
   words: WordMap,
   rhymes: Rhyme[],
@@ -36,7 +36,7 @@ export type State = {
 
 export type Action =
     { type: 'SET_EDITOR_STATE', editorState: Object }
-  | { type: 'LOAD_DATA_SUCCESS' }
+  | { type: 'LOAD_DATA_SUCCESS', words: WordMap, rhymes: Rhyme[] }
   | { type: 'SELECT_RHYME', word: ?string }
   | { type: 'SELECT_WORD', word: ?string }
   ;

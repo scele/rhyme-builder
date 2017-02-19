@@ -42,7 +42,7 @@ let App = ({ version, rhymes, onUserType, onWordSelected, onRhymeSelected }: App
         <Table>
           <TableBody displayRowCheckbox={false} deselectOnClickaway={false}>
             {rhymes.currentWordInstances.map((word, i) => ( 
-              <TableRow key={(rhymes.selectedWord || '') + ' ' + i}>
+              <TableRow key={[rhymes.selectedWord, i]}>
                 <TableRowColumn>{word.actor}</TableRowColumn>
               </TableRow>
             ))}
@@ -60,7 +60,7 @@ let App = ({ version, rhymes, onUserType, onWordSelected, onRhymeSelected }: App
         <Table onRowSelection={(x) => onRhymeSelected(rhymes.currentRhymes[x[0]].word)}>
           <TableBody displayRowCheckbox={false} deselectOnClickaway={false}>
             {rhymes.currentRhymes.map((rhyme, i) => ( 
-              <TableRow key={(rhymes.selectedWord || '') + ' ' + i}>
+              <TableRow key={[rhymes.selectedWord, i]}>
                 <TableRowColumn>{rhyme.word}</TableRowColumn>
                 <TableRowColumn>{rhyme.numInstances}</TableRowColumn>
               </TableRow>
