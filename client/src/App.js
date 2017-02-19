@@ -6,11 +6,8 @@ import { setEditorState, selectWord, selectRhyme } from './actions';
 import { Editor } from 'draft-js';
 import logo from './logo.svg';
 import './App.css';
-// $FlowFixMe
-import { Table, TableBody, TableRow, TableRowColumn } from 'material-ui/Table';
-import Flex from 'jsxstyle/Flex';
+import { Flex, Block, Table, TableRow, TableCell } from 'jsxstyle';
 import type { State, Action, Dispatch } from './types';
-
 
 type AppStateProps = {
   rhymes: State,
@@ -24,6 +21,44 @@ type AppDispatchProps = {
 };
 
 type AppProps = AppStateProps & AppDispatchProps;
+
+const Cell = ({children, onClick}) => (
+  <td
+    onClick={onClick}
+    style={{
+      paddingLeft: 24,
+      paddingRight: 24,
+      height: 48,
+      textAlign: "left",
+      fontSize: 13}}>
+    {children}
+  </td>
+);
+
+const Row = ({children, selected, onClick}) => {
+  const rowColumns = React.Children.map(children, (child, columnNumber) => {
+      if (React.isValidElement(child)) {
+        return React.cloneElement(child, {
+          onClick: onClick,
+        });
+      }
+    });
+  return (
+    <tr style={{backgroundColor: selected ? "rgb(224, 224, 224)" : "white"}}>
+      {rowColumns}
+    </tr>
+  );
+};
+
+const Pane = ({children}) => (
+  <Block flexGrow={1} width="100px">
+    <Table borderCollapse="collapse" width="100%" component="table">
+      <tbody>
+        {children}
+      </tbody>
+    </Table>
+  </Block>
+);
 
 let App = ({ version, rhymes, onUserType, onWordSelected, onRhymeSelected }: AppProps) => (
   <div className="App">
@@ -39,43 +74,41 @@ let App = ({ version, rhymes, onUserType, onWordSelected, onRhymeSelected }: App
         onChange={onUserType}
       /> 
       <Flex justifyContent="flex-start">
-        <Table>
-          <TableBody displayRowCheckbox={false} deselectOnClickaway={false}>
-            {rhymes.currentWordInstances.map((word, i) => ( 
-              <TableRow key={[rhymes.selectedWord, i]}>
-                <TableRowColumn>{word.actor}</TableRowColumn>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-        <Table onRowSelection={(x) => onWordSelected(rhymes.currentWords[x[0]])}>
-          <TableBody displayRowCheckbox={false} deselectOnClickaway={false}>
-            {rhymes.currentWords.map((word) => ( 
-              <TableRow key={word}>
-                <TableRowColumn>{word}</TableRowColumn>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-        <Table onRowSelection={(x) => onRhymeSelected(rhymes.currentRhymes[x[0]].word)}>
-          <TableBody displayRowCheckbox={false} deselectOnClickaway={false}>
-            {rhymes.currentRhymes.map((rhyme, i) => ( 
-              <TableRow key={[rhymes.selectedWord, i]}>
-                <TableRowColumn>{rhyme.word}</TableRowColumn>
-                <TableRowColumn>{rhyme.numInstances}</TableRowColumn>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-        <Table>
-          <TableBody displayRowCheckbox={false} deselectOnClickaway={false}>
-            {rhymes.currentRhymeInstances.map((word, i) => ( 
-              <TableRow key={[rhymes.selectedRhyme, i]}>
-                <TableRowColumn>{word.actor}</TableRowColumn>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+        <Pane>
+          {rhymes.currentWordInstances.map((word, i) => (
+            <Row key={[rhymes.selectedWord, i]}>
+              <Cell>{word.actor} ({word.time})</Cell>
+            </Row>
+          ))}
+        </Pane>
+        <Pane>
+          {rhymes.currentWords.map((word, i) => (
+            <Row
+                onClick={() => onWordSelected(word)}
+                key={word}
+                selected={rhymes.selectedWord === word}>
+              <Cell>{word}</Cell>
+            </Row>
+          ))}
+        </Pane>
+        <Pane>
+          {rhymes.currentRhymes.map((rhyme, i) => (
+            <Row
+                onClick={() => onRhymeSelected(rhyme.word)}
+                key={[rhymes.selectedWord, i]}
+                selected={rhymes.selectedRhyme === rhyme.word}>
+              <Cell>{rhyme.word}</Cell>
+              <Cell>{rhyme.numInstances}</Cell>
+            </Row>
+          ))}
+        </Pane>
+        <Pane>
+          {rhymes.currentRhymeInstances.map((word, i) => (
+            <Row key={[rhymes.selectedRhyme, i]}>
+              <Cell>{word.actor} ({word.time})</Cell>
+            </Row>
+          ))}
+        </Pane>
       </Flex>
   </div>
 );
