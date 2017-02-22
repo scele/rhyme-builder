@@ -1,17 +1,48 @@
 // @flow
 
-import { EditorState } from 'draft-js';
+import { EditorState, convertFromRaw, convertToRaw } from 'draft-js';
 import { flow, keys, filter, includes, map, flatten, uniq, mapValues, find } from 'lodash/fp';
 import type { State, Action } from '../types';
 
+const loadState = (): $Shape<State> => {
+  try {
+    const persisted: $Shape<State> = JSON.parse(localStorage.getItem('state') || '');
+    return {
+      editor: {
+        state: EditorState.createWithContent(convertFromRaw(persisted.editor.state)),
+        currentWord: persisted.editor.currentWord,
+      },
+      selectedWord: persisted.selectedWord,
+      selectedRhyme: persisted.selectedRhyme,
+    };
+  } catch(err) {
+    return {
+      editor: {
+        state: EditorState.createEmpty(),
+        currentWord: null,
+      },
+      selectedWord: undefined,
+      selectedRhyme: undefined,
+    };
+  }
+};
+
+const saveState = (state: State) => {
+  localStorage.setItem('state', JSON.stringify({
+    editor: {
+      state: convertToRaw(state.editor.state.getCurrentContent()),
+      currentWord: state.editor.currentWord,
+    },
+    selectedWord: state.selectedWord,
+    selectedRhyme: state.selectedRhyme,
+  }));
+};
+
 const initialState: State = {
-  editor: EditorState.createEmpty(),
-  editorWord: undefined,
+  ...loadState(),
   currentWords: [],
-  selectedWord: undefined,
   currentWordInstances: [],
   currentRhymes: [],
-  selectedRhyme: undefined,
   currentRhymeInstances: [],
   words: {},
   rhymes: [],
@@ -64,7 +95,7 @@ const computeState = (oldState: State, modification: $Shape<State>): State => {
   };
   
   // Words and word instances.
-  state.currentWords = state.editorWord ? getStartingWords(state.editorWord, state.words) : [];
+  state.currentWords = state.editor.currentWord ? getStartingWords(state.editor.currentWord, state.words) : [];
   if (state.selectedWord && !includes(state.selectedWord)(state.currentWords)) {
     state.selectedWord = undefined;
   }
@@ -92,6 +123,7 @@ const computeState = (oldState: State, modification: $Shape<State>): State => {
   }
   state.currentRhymeInstances = state.selectedRhyme ? state.words[state.selectedRhyme] : [];
 
+  saveState(state);
   return state;
 };
 
@@ -114,10 +146,13 @@ export default function rhymes(state: State = initialState, action: Action): Sta
     case 'SELECT_RHYME':
       return computeState(state, { selectedRhyme: action.word });
     case 'SET_EDITOR_STATE':
-      return computeState(state, { editor: action.editorState, editorWord: getEditorWord(action.editorState) });
+      const editor = {
+        state: action.editorState,
+        currentWord: getEditorWord(action.editorState),
+      };
+      return computeState(state, { editor: editor });
     case 'LOAD_DATA_SUCCESS':
-      return {
-        ...state,
+      return computeState(state, {
         words: mapValues(w => w.map(
           wi => ({
             ...wi,
@@ -127,8 +162,7 @@ export default function rhymes(state: State = initialState, action: Action): Sta
           ))(action.words),
         rhymes: action.rhymes,
         videos: action.videos,
-        text: '',
-      };
+      });
     default:
       return state;
   }

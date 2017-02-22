@@ -5,7 +5,10 @@ declare module 'draft-js' {
   declare var exports: {
     EditorState: {
       createEmpty(): EditorStateType,
+      createWithContent: Object => EditorStateType,
     },
-    Editor: Object
+    Editor: Object,
+    convertFromRaw: Object => Object,
+    convertToRaw: Object => Object,
   };
 }

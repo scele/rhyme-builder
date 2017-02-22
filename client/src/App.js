@@ -125,7 +125,7 @@ let App = ({ version, rhymes, onUserType, onWordSelected, onRhymeSelected, onVid
       Server version: {version.version}.
     </p>
       <Editor
-        editorState={rhymes.editor}
+        editorState={rhymes.editor.state}
         onChange={onUserType}
       /> 
       <Flex justifyContent="flex-start">

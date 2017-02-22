@@ -30,8 +30,10 @@ type Video = {
 };
 
 export type State = {
-  editor: Object,
-  editorWord: ?string,
+  editor: {
+    state: Object,
+    currentWord: ?string,
+  },
   currentWords: Array<string>,
   selectedWord: ?string,
   currentWordInstances: Array<Word>,
