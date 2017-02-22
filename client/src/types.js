@@ -5,8 +5,9 @@ import type { Store as ReduxStore, Dispatch as ReduxDispatch } from 'redux';
 
 export type Word = {
   actor: string,
-  video: string,
   time: string,
+  seconds: number,
+  video: Video,
 };
 
 type WordMap = {[id:string]: Array<Word>};
@@ -21,6 +22,13 @@ type SelectedRhyme = {
   numInstances: number
 };
 
+type Video = {
+  actor: string,
+  title: string,
+  text: string,
+  video: string,
+};
+
 export type State = {
   editor: Object,
   editorWord: ?string,
@@ -32,13 +40,17 @@ export type State = {
   currentRhymeInstances: Array<Word>,
   words: WordMap,
   rhymes: Rhyme[],
+  videos: Video[],
+  selectedWordInstance: ?string,
+  selectedRhymeInstance: ?string,
 };
 
 export type Action =
     { type: 'SET_EDITOR_STATE', editorState: Object }
-  | { type: 'LOAD_DATA_SUCCESS', words: WordMap, rhymes: Rhyme[] }
+  | { type: 'LOAD_DATA_SUCCESS', words: WordMap, rhymes: Rhyme[], videos: Video[] }
   | { type: 'SELECT_RHYME', word: ?string }
   | { type: 'SELECT_WORD', word: ?string }
+  | { type: 'LOAD_VERSION_SUCCESS', response: Object }
   ;
 
 export type Store = ReduxStore<State, Action>;

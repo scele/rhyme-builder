@@ -44,6 +44,8 @@ declare module 'lodash/fp' {
     keys(object?: ?Object): Array<string>;
     filter<T>(predicate: Predicate<T>): (array: ?Array<T>) => Array<T>;
     filter<A, T: {[id: string]: A}>(predicate: OPredicate<A, T>): (object: T) => Array<A>;
+    find<T>(predicate: Predicate<T>): (array: ?Array<T>) => T;
+    find<V, A, T: {[id: string]: A}>(predicate: OPredicate<A, T>): (object: T) => V;
     includes<T>(value: T): (array: ?Array<T>,) => bool;
     includes<T: Object>(value: any): (object: T) => bool;
     includes(value: string): (str: string) => bool;
@@ -53,8 +55,10 @@ declare module 'lodash/fp' {
     map<T, U>(iteratee: MapIterator<T, U>): (array: ?Array<T>) => Array<U>;
     map<V, T: Object, U>(iteratee: OMapIterator<V, T, U>): (object: ?T) => Array<U>;
     map(iteratee: (char: string, index: number, str: string) => any): (str: ?string) => string;
+    mapValues(iteratee: OIteratee<*>): (object: ?Object) => Object;
     flatten<T,X>(array: Array<Array<T>|X>): Array<T|X>;
     uniq<T>(array: ?Array<T>): Array<T>;
+    zipObject(props: Array<any>): (values: Array<any>) => Object;
   }
 
   declare var exports: Lodash;

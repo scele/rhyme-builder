@@ -1,8 +1,11 @@
 // @flow
 
 import React from 'react';
+import ReactDOM from 'react-dom';
 import { connect } from 'react-redux';
 import { setEditorState, selectWord, selectRhyme } from './actions';
+import { Card, CardMedia, CardText, CardHeader } from 'material-ui/Card';
+import Avatar from 'material-ui/Avatar';
 import { Editor } from 'draft-js';
 import logo from './logo.svg';
 import './App.css';
@@ -15,7 +18,7 @@ type AppStateProps = {
 };
 
 type AppDispatchProps = {
-  onUserType: string => Action,
+  onUserType: Object => Action,
   onWordSelected: string => Action,
   onRhymeSelected: string => Action,
 };
@@ -50,8 +53,8 @@ const Row = ({children, selected, onClick}) => {
   );
 };
 
-const Pane = ({children}) => (
-  <Block flexGrow={1} width="100px">
+const Pane = ({children, size = 1}) => (
+  <Block flexGrow={size} width="100px">
     <Table borderCollapse="collapse" width="100%" component="table">
       <tbody>
         {children}
@@ -60,7 +63,59 @@ const Pane = ({children}) => (
   </Block>
 );
 
-let App = ({ version, rhymes, onUserType, onWordSelected, onRhymeSelected }: AppProps) => (
+const FlexPane = ({children, size = 1}) => (
+  <Block flexGrow={size} width="100px">
+    <Flex flexWrap="wrap" textAlign="left">
+      {children}
+    </Flex>
+  </Block>
+);
+
+class Video extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      paused: true,
+    };
+  }
+  componentDidMount() {
+    this.videoElement.currentTime = this.props.currentTime;
+  }
+  componentDidUpdate() {
+    this.videoElement.currentTime = this.props.currentTime;
+  }
+  onClick() {
+    this.setState({ paused: !this.videoElement.paused });
+    this.videoElement.paused ? this.videoElement.play() : this.videoElement.pause();
+  }
+  render() {
+    return (
+      <Block position="relative" cursor="pointer">
+        <video preload="metadata" style={{width:300}}
+              onClick={this.onClick.bind(this)} ref={c => this.videoElement = c}>
+          <source src={this.props.src} type='video/mp4'/>
+        </video>
+        { this.state.paused
+          ? <input type="image" src="/play.png" style={{position: 'absolute', left: '50%', top: '50%', margin: '-36px', pointerEvents: 'none'}} />
+          : null }
+      </Block>
+    );
+  }
+}
+
+const VideoCard = ({ word }) => (
+  <Card style={{marginLeft: 20, marginBottom: 20}}>
+    <CardHeader avatar={<Avatar>J</Avatar>} title={word.actor} subtitle={word.video.title} />
+    <CardMedia>
+      <Video src={word.video.video} currentTime={word.seconds} />
+    </CardMedia>
+    <CardText>
+      Lorem ipsum dolor sit amet, consectetur
+    </CardText>
+  </Card>
+);
+
+let App = ({ version, rhymes, onUserType, onWordSelected, onRhymeSelected, onVideoError }: AppProps) => (
   <div className="App">
     <div className="App-header">
       <img src={logo} className="App-logo" alt="logo" />
@@ -74,13 +129,11 @@ let App = ({ version, rhymes, onUserType, onWordSelected, onRhymeSelected }: App
         onChange={onUserType}
       /> 
       <Flex justifyContent="flex-start">
-        <Pane>
+        <FlexPane size={2}>
           {rhymes.currentWordInstances.map((word, i) => (
-            <Row key={[rhymes.selectedWord, i]}>
-              <Cell>{word.actor} ({word.time})</Cell>
-            </Row>
+            <VideoCard key={[rhymes.selectedWord, i]} word={word} />
           ))}
-        </Pane>
+        </FlexPane>
         <Pane>
           {rhymes.currentWords.map((word, i) => (
             <Row
@@ -102,13 +155,11 @@ let App = ({ version, rhymes, onUserType, onWordSelected, onRhymeSelected }: App
             </Row>
           ))}
         </Pane>
-        <Pane>
+        <FlexPane size={2}>
           {rhymes.currentRhymeInstances.map((word, i) => (
-            <Row key={[rhymes.selectedRhyme, i]}>
-              <Cell>{word.actor} ({word.time})</Cell>
-            </Row>
+            <VideoCard key={[rhymes.selectedRhyme, i]} word={word} />
           ))}
-        </Pane>
+        </FlexPane>
       </Flex>
   </div>
 );
@@ -116,9 +167,9 @@ let App = ({ version, rhymes, onUserType, onWordSelected, onRhymeSelected }: App
 App = connect(
   (state): AppStateProps => ({ version: state.version, rhymes: state.rhymes }),
   (dispatch: Dispatch): AppDispatchProps => ({
-    onUserType: (editor) => dispatch(setEditorState(editor)),
-    onWordSelected: (word) => dispatch(selectWord(word)),
-    onRhymeSelected: (word) => dispatch(selectRhyme(word)),
+    onUserType: (editor) => setEditorState(editor)(dispatch),
+    onWordSelected: (word) => selectWord(word)(dispatch),
+    onRhymeSelected: (word) => selectRhyme(word)(dispatch),
   })
 )(App);
 

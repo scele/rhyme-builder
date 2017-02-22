@@ -20,10 +20,17 @@ app.use(allowCrossDomain);
 app.use(bodyParser.json());
 app.set('json spaces', 2);
 
-const getActors = () => fs.readdirSync('data').filter(file => fs.statSync(path.join('data', file)).isDirectory());
-const getVideos = (actor) => fs.readdirSync(path.join('data', actor));
-const getWords = (actor, video) => {
-  const contents = fs.readFileSync(`data/${actor}/${video}`, 'utf8');
+const videos = [
+  {
+    actor: 'Juha Sipilä',
+    title: 'Puheenjohtajatentti',
+    text: 'Juha Sipilä/Eduskuntavaalit 2015 - 2015-07-02 - Puheenjohtajatentissä Juha Sipilä (kesk.).txt',
+    video: 'data/Juha Sipilä/long_aac.mp4',
+  }
+];
+
+const getWords = (video) => {
+  const contents = fs.readFileSync(`data/${video.text}`, 'utf8');
   const matches = contents.toLowerCase().match(/[\d:]+|[\w\u00C0-\u00D6\u00D8-\u00F6]+/gu);
   let time = 0;
   for (let match of matches) {
@@ -33,8 +40,8 @@ const getWords = (actor, video) => {
     }
     let w = words[match] || [];
     let obj = {
-      actor: actor,
-      video: video,
+      actor: video.actor,
+      video: video.video,
       time: time,
     }
     words[match] = [...w, obj];
@@ -66,7 +73,7 @@ const buildRhymes = (words) => {
 
 
 let words = {};
-getActors().map(a => getVideos(a).map(v => getWords(a, v)));
+videos.map(v => getWords(v));
 const rhymes = buildRhymes(words);
 
 app.use('/', express.static('client/build'));
@@ -76,6 +83,9 @@ app.get('/api/rhymes', (req, res) => {
 });
 app.get('/api/words', (req, res) => {
   res.json(words);
+});
+app.get('/api/videos', (req, res) => {
+  res.json(videos)
 });
 app.get('/api/data', (req, res) => {
   res.json(getActors().map(a => {

@@ -1,7 +1,7 @@
 // @flow
 
 import { EditorState } from 'draft-js';
-import { flow, keys, filter, includes, map, flatten, uniq } from 'lodash/fp';
+import { flow, keys, filter, includes, map, flatten, uniq, mapValues, find } from 'lodash/fp';
 import type { State, Action } from '../types';
 
 const initialState: State = {
@@ -15,6 +15,9 @@ const initialState: State = {
   currentRhymeInstances: [],
   words: {},
   rhymes: [],
+  videos: [],
+  selectedWordInstance: undefined,
+  selectedRhymeInstance: undefined,
 };
 
 const getMatchingWords = (search, words) =>
@@ -92,6 +95,18 @@ const computeState = (oldState: State, modification: $Shape<State>): State => {
   return state;
 };
 
+const timeRegex = /(\d\d):(\d\d):(\d\d)/;
+const timeToSeconds = (time: string): number => {
+  if (!time)
+    return 0;
+  const m = time.match(timeRegex);
+  if (m) {
+    return 60 * 60 * parseInt(m[1]) + 60 * parseInt(m[2]) + parseInt(m[3]);
+  } else {
+    return 0;
+  }
+};
+
 export default function rhymes(state: State = initialState, action: Action): State {
   switch (action.type) {
     case 'SELECT_WORD':
@@ -103,8 +118,15 @@ export default function rhymes(state: State = initialState, action: Action): Sta
     case 'LOAD_DATA_SUCCESS':
       return {
         ...state,
-        words: action.words,
+        words: mapValues(w => w.map(
+          wi => ({
+            ...wi,
+            seconds: timeToSeconds(wi.time),
+            video: find(v => v.video == wi.video)(action.videos)
+          })
+          ))(action.words),
         rhymes: action.rhymes,
+        videos: action.videos,
         text: '',
       };
     default:

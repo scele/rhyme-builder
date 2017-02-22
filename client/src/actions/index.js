@@ -1,12 +1,16 @@
+// @flow
+
 import { zipObject } from 'lodash/fp';
+import type { Dispatch } from '../types';
+
 
 function checkStatus(response) {
   if (response.status >= 200 && response.status < 300) {
     return response;
   } else {
     const error = new Error(`HTTP Error ${response.statusText}`);
-    error.status = response.statusText;
-    error.response = response;
+    //error.status = response.statusText;
+    //error.response = response;
     console.log(error); // eslint-disable-line no-console
     throw error;
   }
@@ -17,7 +21,7 @@ function parseJSON(response) {
   return response.json();
 }
 
-export const loadVersion = () => (dispatch) => {
+export const loadVersion = () => (dispatch: Dispatch) => {
   fetch('/api/version', { headers: { 'Accept': 'application/json' } })
     .then(checkStatus)
     .then(parseJSON)
@@ -35,52 +39,37 @@ const fetchJson = (path) =>
     .then(checkStatus)
     .then(parseJSON);
 
-export const setEditorState = (editorState) => (dispatch) =>
+export const setEditorState = (editorState: Object) => (dispatch: Dispatch) =>
   dispatch({
     type: 'SET_EDITOR_STATE',
     editorState: editorState,
   });
 
-export const selectWord = (word) => (dispatch) =>
+export const selectWord = (word: string) => (dispatch: Dispatch) =>
   dispatch({
     type: 'SELECT_WORD',
     word: word,
   });
 
-export const selectRhyme = (word) => (dispatch) =>
+export const selectRhyme = (word: string) => (dispatch: Dispatch) =>
   dispatch({
     type: 'SELECT_RHYME',
     word: word,
   });
 
-export const loadData = () => (dispatch) => {
+export const loadData = () => (dispatch: Dispatch) => {
   Promise.all([
     fetchJson('/api/words'),
-    fetchJson('/api/rhymes')
-  ]).then(zipObject(['words', 'rhymes']))
-   .then(reponse => dispatch({
-        type: 'LOAD_DATA_SUCCESS',
-        ...reponse,
-      })
-   );
-   /*
-    .then(checkStatus)
-    .then(parseJSON)
-    .then(response => {
-      console.log(response);
-      return Promise.all(
-        response.raw.map((path) => {
-          return fetchJson(path)
-                  .then(checkStatus)
-                  .then((response) => { return response.text(); })
-        })
-      );
+    fetchJson('/api/rhymes'),
+    fetchJson('/api/videos')
+  ])
+  .then(zipObject(['words', 'rhymes', 'videos']))
+  .then(response =>
+    dispatch({
+      type: 'LOAD_DATA_SUCCESS',
+      words: response.words,
+      rhymes: response.rhymes,
+      videos: response.videos,
     })
-    .then(response => {
-      console.log(response);
-      return dispatch({
-        type: 'LOAD_DATA_SUCCESS',
-        response
-      });
-    });*/
+  );
 };
