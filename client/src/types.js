@@ -18,9 +18,9 @@ type Rhyme = {
   words: string[],
 };
 
-type SelectedRhyme = {
+type SelectedWord = {
   word: string,
-  numInstances: number
+  instances: Word[],
 };
 
 type Video = {
@@ -35,10 +35,10 @@ export type State = {
     state: Object,
     currentWord: ?string,
   },
-  currentWords: Array<string>,
+  currentWords: SelectedWord[],
   selectedWord: ?string,
   currentWordInstances: Array<Word>,
-  currentRhymes: SelectedRhyme[],
+  currentRhymes: SelectedWord[],
   selectedRhyme: ?string,
   currentRhymeInstances: Array<Word>,
   words: WordMap,

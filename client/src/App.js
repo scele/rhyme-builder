@@ -140,10 +140,11 @@ let App = ({ version, rhymes, onUserType, onWordSelected, onRhymeSelected, onVid
         <Pane>
           {rhymes.currentWords.map((word, i) => (
             <Row
-                onClick={() => onWordSelected(word)}
-                key={word}
-                selected={rhymes.selectedWord === word}>
-              <Cell>{word}</Cell>
+                onClick={() => onWordSelected(word.word)}
+                key={word.word}
+                selected={rhymes.selectedWord === word.word}>
+              <Cell>{word.word}</Cell>
+              <Cell>{word.instances.length}</Cell>
             </Row>
           ))}
         </Pane>
@@ -154,7 +155,7 @@ let App = ({ version, rhymes, onUserType, onWordSelected, onRhymeSelected, onVid
                 key={[rhymes.selectedWord, i]}
                 selected={rhymes.selectedRhyme === rhyme.word}>
               <Cell>{rhyme.word}</Cell>
-              <Cell>{rhyme.numInstances}</Cell>
+              <Cell>{rhyme.instances.length}</Cell>
             </Row>
           ))}
         </Pane>

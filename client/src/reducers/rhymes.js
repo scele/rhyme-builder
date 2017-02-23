@@ -95,8 +95,11 @@ const computeState = (oldState: State, modification: $Shape<State>): State => {
   };
   
   // Words and word instances.
-  state.currentWords = state.editor.currentWord ? getStartingWords(state.editor.currentWord, state.words) : [];
-  if (state.selectedWord && !includes(state.selectedWord)(state.currentWords)) {
+  const currentWords = state.editor.currentWord ? getStartingWords(state.editor.currentWord, state.words) : [];
+  state.currentWords = flow(
+    map(x => ({ word: x, instances: state.words[x] }))
+  )(currentWords);
+  if (state.selectedWord && !includes(state.selectedWord)(currentWords)) {
     state.selectedWord = undefined;
   }
   if (state.currentWords.length === 1) {
@@ -111,9 +114,10 @@ const computeState = (oldState: State, modification: $Shape<State>): State => {
       map(x => x.words),
       flatten,
       uniq,
+      filter(x => x !== state.selectedWord),
     )(state.rhymes) : [];
   state.currentRhymes = flow(
-    map(x => ({ word: x, numInstances: state.words[x].length }))
+    map(x => ({ word: x, instances: state.words[x] }))
   )(currentRhymes);
   if (state.selectedRhyme && !includes(state.selectedRhyme)(currentRhymes)) {
     state.selectedRhyme = undefined;

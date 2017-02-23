@@ -37,39 +37,46 @@ const getWords = (video) => {
   // 4 - word
   // 5 - succeeding delim chars
   // 6 - standalone non-whitespace chars
-  const re = /([\d:]+)|((\S*?)([\w\u00C0-\u00D6\u00D8-\u00F6]+)(\S*))|(\S+)/gu;
-  let time = 0;
+  const re = /(\d+:\d+:?\d*)|((\S*?)([\w\u00C0-\u00D6\u00D8-\u00F6]+)(\S*))|(\S+)/gu;
   let match;
   const tokens = [];
   while ((match = re.exec(contents)) !== null) {
     tokens.push({
       time: match[1],
-      word: match[4],
+      word: match[4] ? match[4].toLowerCase() : null,
       wordAndChars: match[2],
       index: match.index + (match[3] ? match[3].length : 0),
     });
   }
+
+  const takeTextLeftUntil = (length) => (tokens) =>
+    transform((folded, token) => {
+      if (folded.text.length > 0 && folded.text.length + token.length > length)
+        return false;
+      folded.text = token + ' ' + folded.text;
+    }, { text: '' })(tokens).text.trim();
+
+  const takeTextRightUntil = (length) => (tokens) =>
+    transform((folded, token) => {
+      if (folded.text.length > 0 && folded.text.length + token.length > length)
+        return false;
+      folded.text = folded.text + ' ' + token;
+    }, { text: '' })(tokens).text.trim();
+
   const getContext = (initialToken, contextLeft, contextRight) => tokens => flow(
     take(initialToken),
     filter(token => token.wordAndChars),
     map(token => token.wordAndChars),
     reverse,
-    transform((folded, token) => {
-      if (folded.text.length > 0 && folded.text.length + token.length > contextLeft)
-        return false;
-      folded.text = token + ' ' + folded.text;
-    }, { text: '' }),
-  )(tokens).text.trim() + ' ' + flow(
+    takeTextLeftUntil(contextLeft)
+  )(tokens) + ' ' + flow(
     drop(initialToken),
     filter(token => token.wordAndChars),
     map(token => token.wordAndChars),
-    transform((folded, token) => {
-      if (folded.text.length > 0 && folded.text.length + token.length > contextRight)
-        return false;
-      folded.text = folded.text + ' ' + token;
-    }, { text: '' }),
-  )(tokens).text.trim();
+    takeTextRightUntil(contextRight)
+  )(tokens);
 
+  let time = 0;
   tokens.forEach((token, i) => {
     if (token.time) {
       time = token.time;
@@ -107,7 +114,6 @@ const buildRhymes = (words) => {
     uniqBy(x => x.words.join('-')),
   )(rhymes);
 };
-
 
 let words = {};
 videos.map(v => getWords(v));
