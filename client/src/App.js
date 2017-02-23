@@ -63,9 +63,9 @@ const Pane = ({children, size = 1}) => (
   </Block>
 );
 
-const FlexPane = ({children, size = 1}) => (
+const FlexPane = ({children, size = 1, justifyContent='flex-start'}) => (
   <Block flexGrow={size} width="100px">
-    <Flex flexWrap="wrap" textAlign="left">
+    <Flex flexWrap="wrap" textAlign="left" justifyContent={justifyContent}>
       {children}
     </Flex>
   </Block>
@@ -104,7 +104,7 @@ class Video extends React.Component {
 }
 
 const VideoCard = ({ word }) => (
-  <Card style={{marginLeft: 20, marginBottom: 20}}>
+  <Card style={{marginLeft: 10, marginRight: 10, marginBottom: 20}}>
     <CardHeader avatar={<Avatar>J</Avatar>} title={word.actor} subtitle={word.video.title} />
     <CardMedia>
       <Video src={word.video.video} currentTime={word.seconds} />
@@ -129,7 +129,7 @@ let App = ({ version, rhymes, onUserType, onWordSelected, onRhymeSelected, onVid
         onChange={onUserType}
       /> 
       <Flex justifyContent="flex-start">
-        <FlexPane size={2}>
+        <FlexPane size={2} justifyContent="flex-end">
           {rhymes.currentWordInstances.map((word, i) => (
             <VideoCard key={[rhymes.selectedWord, i]} word={word} />
           ))}
