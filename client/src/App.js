@@ -110,7 +110,10 @@ const VideoCard = ({ word }) => (
       <Video src={word.video.video} currentTime={word.seconds} />
     </CardMedia>
     <CardText>
-      Lorem ipsum dolor sit amet, consectetur
+      <Block textOverflow="ellipsis" width="252px"
+             whiteSpace="nowrap" overflow="hidden">
+        {word.context}
+      </Block>
     </CardText>
   </Card>
 );

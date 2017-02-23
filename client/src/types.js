@@ -8,6 +8,7 @@ export type Word = {
   time: string,
   seconds: number,
   video: Video,
+  context: string,
 };
 
 type WordMap = {[id:string]: Array<Word>};

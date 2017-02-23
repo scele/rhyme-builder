@@ -3,7 +3,7 @@ import jsonfile from 'jsonfile';
 import bodyParser from 'body-parser';
 import fs from 'fs';
 import path from 'path';
-import { flow, filter, orderBy, take, uniqBy } from 'lodash/fp';
+import { flow, filter, orderBy, take, uniqBy, map, reverse, transform, drop } from 'lodash/fp';
 
 const app = express();
 
@@ -31,21 +31,58 @@ const videos = [
 
 const getWords = (video) => {
   const contents = fs.readFileSync(`data/${video.text}`, 'utf8');
-  const matches = contents.toLowerCase().match(/[\d:]+|[\w\u00C0-\u00D6\u00D8-\u00F6]+/gu);
+  // 1 - timestamp
+  // 2 - word, including attached delim chars
+  // 3 - preceding delim chars
+  // 4 - word
+  // 5 - succeeding delim chars
+  // 6 - standalone non-whitespace chars
+  const re = /([\d:]+)|((\S*?)([\w\u00C0-\u00D6\u00D8-\u00F6]+)(\S*))|(\S+)/gu;
   let time = 0;
-  for (let match of matches) {
-    if (match.match(/[\d:]+/gu)) {
-      time = match;
-      continue;
-    }
-    let w = words[match] || [];
-    let obj = {
-      actor: video.actor,
-      video: video.video,
-      time: time,
-    }
-    words[match] = [...w, obj];
+  let match;
+  const tokens = [];
+  while ((match = re.exec(contents)) !== null) {
+    tokens.push({
+      time: match[1],
+      word: match[4],
+      wordAndChars: match[2],
+      index: match.index + (match[3] ? match[3].length : 0),
+    });
   }
+  const getContext = (initialToken, contextLeft, contextRight) => tokens => flow(
+    take(initialToken),
+    filter(token => token.wordAndChars),
+    map(token => token.wordAndChars),
+    reverse,
+    transform((folded, token) => {
+      if (folded.text.length > 0 && folded.text.length + token.length > contextLeft)
+        return false;
+      folded.text = token + ' ' + folded.text;
+    }, { text: '' }),
+  )(tokens).text.trim() + ' ' + flow(
+    drop(initialToken),
+    filter(token => token.wordAndChars),
+    map(token => token.wordAndChars),
+    transform((folded, token) => {
+      if (folded.text.length > 0 && folded.text.length + token.length > contextRight)
+        return false;
+      folded.text = folded.text + ' ' + token;
+    }, { text: '' }),
+  )(tokens).text.trim();
+
+  tokens.forEach((token, i) => {
+    if (token.time) {
+      time = token.time;
+    } else if (token.word) {
+      let obj = {
+        actor: video.actor,
+        video: video.video,
+        time: time,
+        context: getContext(i, 10, 50)(tokens),
+      };
+      (words[token.word] || (words[token.word] = [])).push(obj);
+    }
+  });
 };
 
 const buildRhymes = (words) => {
