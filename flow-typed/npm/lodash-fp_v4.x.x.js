@@ -58,7 +58,10 @@ declare module 'lodash/fp' {
     mapValues(iteratee: OIteratee<*>): (object: ?Object) => Object;
     flatten<T,X>(array: Array<Array<T>|X>): Array<T|X>;
     uniq<T>(array: ?Array<T>): Array<T>;
+    uniqBy<T>(iteratee: Iteratee<T>): (array: ?Array<T>) => Array<T>;
     zipObject(props: Array<any>): (values: Array<any>) => Object;
+    orderBy<T>(iteratees: Iteratee<T>|Array<Iteratee<T>>|string, orders?: Array<'asc'|'desc'>|string): (array: ?Array<T>) => Array<T>;
+    orderBy<V, T: Object>(iteratees: OIteratee<*>|Array<OIteratee<*>>|string, orders?: Array<'asc'|'desc'>|string): (object: T) => Array<V>;
   }
 
   declare var exports: Lodash;

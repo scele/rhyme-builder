@@ -1,7 +1,7 @@
 // @flow
 
 import { zipObject } from 'lodash/fp';
-import type { Dispatch } from '../types';
+import type { Dispatch, Word, RhymingWord } from '../types';
 
 
 function checkStatus(response) {
@@ -45,13 +45,13 @@ export const setEditorState = (editorState: Object) => (dispatch: Dispatch) =>
     editorState: editorState,
   });
 
-export const selectWord = (word: string) => (dispatch: Dispatch) =>
+export const selectWord = (word: Word) => (dispatch: Dispatch) =>
   dispatch({
     type: 'SELECT_WORD',
     word: word,
   });
 
-export const selectRhyme = (word: string) => (dispatch: Dispatch) =>
+export const selectRhyme = (word: RhymingWord) => (dispatch: Dispatch) =>
   dispatch({
     type: 'SELECT_RHYME',
     word: word,

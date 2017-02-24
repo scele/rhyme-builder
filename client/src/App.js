@@ -63,13 +63,29 @@ const Pane = ({children, size = 1}) => (
   </Block>
 );
 
-const FlexPane = ({children, size = 1, justifyContent='flex-start'}) => (
-  <Block flexGrow={size} width="100px">
-    <Flex flexWrap="wrap" textAlign="left" justifyContent={justifyContent}>
-      {children}
-    </Flex>
-  </Block>
+const VideoCard = ({ word }) => (
+  <Card style={{marginLeft: 10, marginRight: 10, marginBottom: 20}}>
+    <CardHeader avatar={<Avatar>J</Avatar>} title={word.actor} subtitle={word.video.title} />
+    <CardMedia>
+      <Video src={word.video.video} currentTime={word.seconds} />
+    </CardMedia>
+    <CardText>
+      <Block textOverflow="ellipsis" width="252px"
+             whiteSpace="nowrap" overflow="hidden">
+        {word.context}
+      </Block>
+    </CardText>
+  </Card>
 );
+
+const VideoCardsPane = ({word, justifyContent='flex-start', nullWord = { instances: [] }}) =>
+  <Block flexGrow={2} width="100px">
+    <Flex flexWrap="wrap" textAlign="left" justifyContent={justifyContent}>
+      {(word || nullWord).instances.map((word, i) =>
+        <VideoCard key={[word.str, i]} word={word} />
+      )}
+    </Flex>
+  </Block>;
 
 class Video extends React.Component {
   constructor(props) {
@@ -103,21 +119,6 @@ class Video extends React.Component {
   }
 }
 
-const VideoCard = ({ word }) => (
-  <Card style={{marginLeft: 10, marginRight: 10, marginBottom: 20}}>
-    <CardHeader avatar={<Avatar>J</Avatar>} title={word.actor} subtitle={word.video.title} />
-    <CardMedia>
-      <Video src={word.video.video} currentTime={word.seconds} />
-    </CardMedia>
-    <CardText>
-      <Block textOverflow="ellipsis" width="252px"
-             whiteSpace="nowrap" overflow="hidden">
-        {word.context}
-      </Block>
-    </CardText>
-  </Card>
-);
-
 let App = ({ version, rhymes, onUserType, onWordSelected, onRhymeSelected, onVideoError }: AppProps) => (
   <div className="App">
     <div className="App-header">
@@ -132,38 +133,31 @@ let App = ({ version, rhymes, onUserType, onWordSelected, onRhymeSelected, onVid
         onChange={onUserType}
       /> 
       <Flex justifyContent="flex-start">
-        <FlexPane size={2} justifyContent="flex-end">
-          {rhymes.currentWordInstances.map((word, i) => (
-            <VideoCard key={[rhymes.selectedWord, i]} word={word} />
-          ))}
-        </FlexPane>
+        <VideoCardsPane word={rhymes.selectedWord} justifyContent="flex-end" />
         <Pane>
           {rhymes.currentWords.map((word, i) => (
             <Row
-                onClick={() => onWordSelected(word.word)}
-                key={word.word}
-                selected={rhymes.selectedWord === word.word}>
-              <Cell>{word.word}</Cell>
+                onClick={() => onWordSelected(word)}
+                key={word.str}
+                selected={rhymes.selectedWord === word}>
               <Cell>{word.instances.length}</Cell>
+              <Cell>{word.str}</Cell>
+              <Cell>{word.rhymingWords.length}</Cell>
             </Row>
           ))}
         </Pane>
         <Pane>
-          {rhymes.currentRhymes.map((rhyme, i) => (
+          {rhymes.selectedWord ? rhymes.selectedWord.rhymingWords.map((word, i) => (
             <Row
-                onClick={() => onRhymeSelected(rhyme.word)}
-                key={[rhymes.selectedWord, i]}
-                selected={rhymes.selectedRhyme === rhyme.word}>
-              <Cell>{rhyme.word}</Cell>
-              <Cell>{rhyme.instances.length}</Cell>
+                onClick={() => onRhymeSelected(word)}
+                key={word.str}
+                selected={rhymes.selectedRhymingWord === word}>
+              <Cell>{word.str}</Cell>
+              <Cell>{word.instances.length}</Cell>
             </Row>
-          ))}
+          )) : null}
         </Pane>
-        <FlexPane size={2}>
-          {rhymes.currentRhymeInstances.map((word, i) => (
-            <VideoCard key={[rhymes.selectedRhyme, i]} word={word} />
-          ))}
-        </FlexPane>
+        <VideoCardsPane word={rhymes.selectedRhymingWord} />
       </Flex>
   </div>
 );

@@ -3,7 +3,8 @@ import jsonfile from 'jsonfile';
 import bodyParser from 'body-parser';
 import fs from 'fs';
 import path from 'path';
-import { flow, filter, orderBy, take, uniqBy, map, reverse, transform, drop } from 'lodash/fp';
+import { flow, filter, orderBy, take, uniqBy, map, reverse, transform, drop, zipObject } from 'lodash/fp';
+//import type { WordInstance } from './client/src/types';
 
 const app = express();
 
@@ -76,6 +77,18 @@ const getWords = (video) => {
     takeTextRightUntil(contextRight)
   )(tokens);
 
+  const timeRegex = /(\d\d):(\d\d):(\d\d)/;
+  const timeToSeconds = (time) => {
+    if (!time)
+      return 0;
+    const m = time.match(timeRegex);
+    if (m) {
+      return 60 * 60 * parseInt(m[1]) + 60 * parseInt(m[2]) + parseInt(m[3]);
+    } else {
+      return 0;
+    }
+  };
+
   let time = 0;
   tokens.forEach((token, i) => {
     if (token.time) {
@@ -85,9 +98,10 @@ const getWords = (video) => {
         actor: video.actor,
         video: video.video,
         time: time,
+        seconds: timeToSeconds(time),
         context: getContext(i, 10, 50)(tokens),
       };
-      (words[token.word] || (words[token.word] = [])).push(obj);
+      (words[token.word] || (words[token.word] = { word: token.word, rhymes: [], instances: [] })).instances.push(obj);
     }
   });
 };
@@ -98,13 +112,13 @@ const buildRhymes = (words) => {
     for (let i = 0; i < word.length; i++) {
       const rhyme = word.substring(i);
       const r = rhymes[rhyme] || { rhyme: rhyme, total: 0, words: [] };
-      r.total += words[word].length;
+      r.total += words[word].instances.length;
       r.words.push(word);
       rhymes[rhyme] = r; 
     }
   }
   // Take the longest rhymes with more than one word in them.
-  return flow(
+  rhymes = flow(
     // Skip rhymes that are too short have too few word instances.
     filter(x => x.words.length > 1 && x.rhyme.length > 3),
     // Remove shorter rhymes with identical word list.
@@ -113,11 +127,20 @@ const buildRhymes = (words) => {
     orderBy(x => x.rhyme.length, 'desc'),
     uniqBy(x => x.words.join('-')),
   )(rhymes);
+  return zipObject(map(x => x.rhyme)(rhymes), rhymes);
 };
 
 let words = {};
 videos.map(v => getWords(v));
 const rhymes = buildRhymes(words);
+for (let word of Object.keys(words)) {
+  for (let i = 0; i < word.length; i++) {
+    const rhyme = word.substring(i);
+    if (rhyme in rhymes) {
+      words[word].rhymes.push(rhyme);
+    }
+  }
+}
 
 app.use('/', express.static('client/build'));
 app.use('/data', express.static('data'));

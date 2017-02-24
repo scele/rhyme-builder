@@ -1,8 +1,8 @@
 // @flow
 
 import { EditorState, convertFromRaw, convertToRaw } from 'draft-js';
-import { flow, keys, filter, includes, map, flatten, uniq, mapValues, find } from 'lodash/fp';
-import type { State, Action } from '../types';
+import { flow, keys, filter, includes, map, flatten, uniq, mapValues, find, orderBy, uniqBy } from 'lodash/fp';
+import type { State, Action, Word, RhymingWord, WordInstance } from '../types';
 
 const loadState = (): $Shape<State> => {
   try {
@@ -12,8 +12,8 @@ const loadState = (): $Shape<State> => {
         state: EditorState.createWithContent(convertFromRaw(persisted.editor.state)),
         currentWord: persisted.editor.currentWord,
       },
-      selectedWord: persisted.selectedWord,
-      selectedRhyme: persisted.selectedRhyme,
+      //selectedWord: persisted.selectedWord,
+      //selectedRhyme: persisted.selectedRhyme,
     };
   } catch(err) {
     return {
@@ -21,8 +21,8 @@ const loadState = (): $Shape<State> => {
         state: EditorState.createEmpty(),
         currentWord: null,
       },
-      selectedWord: undefined,
-      selectedRhyme: undefined,
+      //selectedWord: undefined,
+      //selectedRhyme: undefined,
     };
   }
 };
@@ -33,22 +33,19 @@ const saveState = (state: State) => {
       state: convertToRaw(state.editor.state.getCurrentContent()),
       currentWord: state.editor.currentWord,
     },
-    selectedWord: state.selectedWord,
-    selectedRhyme: state.selectedRhyme,
+    selectedWord: state.selectedWord ? state.selectedWord.str : null,
+    selectedRhymingWord: state.selectedRhymingWord ? state.selectedRhymingWord.str : null,
   }));
 };
 
 const initialState: State = {
   ...loadState(),
   currentWords: [],
-  currentWordInstances: [],
-  currentRhymes: [],
-  currentRhymeInstances: [],
+  selectedWord: null,
+  selectedRhymingWord: null,
   words: {},
-  rhymes: [],
+  rhymes: {},
   videos: [],
-  selectedWordInstance: undefined,
-  selectedRhymeInstance: undefined,
 };
 
 const getMatchingWords = (search, words) =>
@@ -94,38 +91,52 @@ const computeState = (oldState: State, modification: $Shape<State>): State => {
     ...modification,
   };
   
-  // Words and word instances.
-  const currentWords = state.editor.currentWord ? getStartingWords(state.editor.currentWord, state.words) : [];
-  state.currentWords = flow(
-    map(x => ({ word: x, instances: state.words[x] }))
-  )(currentWords);
-  if (state.selectedWord && !includes(state.selectedWord)(currentWords)) {
-    state.selectedWord = undefined;
-  }
+  const getRhymingWords = (state: State) => (wordStr: string): RhymingWord[] =>
+    flow(
+      // Array<string>
+      map(rhymeStr => map(word => ({ rhyme: rhymeStr, word: word }))(state.rhymes[rhymeStr].words)),
+      // Array<Array<{rhyme: string, word: string}>>
+      flatten,
+      // Array<{rhyme: string, word: string}>
+      orderBy(x => x.rhyme.length, 'desc'),
+      // Array<{rhyme: string, word: string}>
+      uniqBy(x => x.word),
+      filter(x => x.word !== state.selectedWord),
+      map(x => ({
+          ...getWord(state, false)(x.word),
+          rhyme: x.rhyme,
+      })),
+      // Array<{rhyme: string, word: Word}>
+    )(state.words[wordStr].rhymes);
+
+  const getWordInstances = (state: State) => (wordStr: string): WordInstance[] =>
+    state.words[wordStr].instances;
+
+  const getWord = (state: State, expandRhymes: boolean) => (wordStr: string): Word =>
+    ({
+      str: wordStr,
+      instances: getWordInstances(state)(wordStr),
+      //rhymes: expandRhymes ? getRhymes(state)(wordStr) : [],
+      rhymingWords: expandRhymes ? getRhymingWords(state)(wordStr) : [],
+    });
+
+  const isSameWord = (word1: ?Word) => (word2: ?Word) =>
+    word1 && word2 && word1.str == word2.str;
+
+  let currentWords: string[] = state.editor.currentWord ? getStartingWords(state.editor.currentWord, state.words) : [];
+  state.currentWords = map(getWord(state, true))(currentWords);
+  state.selectedWord = find(isSameWord(state.selectedWord))(state.currentWords);
   if (state.currentWords.length === 1) {
     state.selectedWord = state.currentWords[0];
   }
-  state.currentWordInstances = state.selectedWord ? state.words[state.selectedWord] : [];
 
-  // Rhymes and rhyme instances.
-  const currentRhymes = state.selectedWord ?
-    flow(
-      filter(x => includes(state.selectedWord)(x.words)),
-      map(x => x.words),
-      flatten,
-      uniq,
-      filter(x => x !== state.selectedWord),
-    )(state.rhymes) : [];
-  state.currentRhymes = flow(
-    map(x => ({ word: x, instances: state.words[x] }))
-  )(currentRhymes);
-  if (state.selectedRhyme && !includes(state.selectedRhyme)(currentRhymes)) {
-    state.selectedRhyme = undefined;
+  if (state.selectedWord) {
+    const rhymingWords = state.selectedWord.rhymingWords;
+    state.selectedRhymingWord = find(isSameWord(state.selectedRhymingWord))(rhymingWords);
+    if (rhymingWords.length === 1) {
+      state.selectedWord = rhymingWords[0];
+    }
   }
-  if (state.currentRhymes.length === 1) {
-    state.selectedRhyme = currentRhymes[0];
-  }
-  state.currentRhymeInstances = state.selectedRhyme ? state.words[state.selectedRhyme] : [];
 
   saveState(state);
   return state;
@@ -148,7 +159,7 @@ export default function rhymes(state: State = initialState, action: Action): Sta
     case 'SELECT_WORD':
       return computeState(state, { selectedWord: action.word });
     case 'SELECT_RHYME':
-      return computeState(state, { selectedRhyme: action.word });
+      return computeState(state, { selectedRhymingWord: action.word });
     case 'SET_EDITOR_STATE':
       const editor = {
         state: action.editorState,
@@ -157,13 +168,13 @@ export default function rhymes(state: State = initialState, action: Action): Sta
       return computeState(state, { editor: editor });
     case 'LOAD_DATA_SUCCESS':
       return computeState(state, {
-        words: mapValues(w => w.map(
-          wi => ({
+        words: mapValues(w => ({
+          ...w,
+          instances: w.instances.map((wi) => ({
             ...wi,
-            seconds: timeToSeconds(wi.time),
-            video: find(v => v.video == wi.video)(action.videos)
-          })
-          ))(action.words),
+            video: find(v => v.video == wi.video)(action.videos),
+          })),
+        }))(action.words),
         rhymes: action.rhymes,
         videos: action.videos,
       });
