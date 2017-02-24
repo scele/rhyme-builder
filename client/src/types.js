@@ -61,21 +61,20 @@ export type State = {
   },
 
   currentWords: Word[],
+  currentRhymingWords: RhymingWord[],
   selectedWord: ?Word,
   selectedRhymingWord: ?RhymingWord,
 
   words: ServerWordMap,
   rhymes: ServerRhymeMap,
   videos: Video[],
-  selectedWordInstance: ?string,
-  selectedRhymeInstance: ?string,
 };
 
 export type Action =
     { type: 'SET_EDITOR_STATE', editorState: Object }
   | { type: 'LOAD_DATA_SUCCESS', words: ServerWordMap, rhymes: ServerRhymeMap, videos: Video[] }
-  | { type: 'SELECT_RHYME', word: ?RhymingWord }
-  | { type: 'SELECT_WORD', word: ?Word }
+  | { type: 'SELECT_RHYME', word: ?string }
+  | { type: 'SELECT_WORD', word: ?string }
   | { type: 'LOAD_VERSION_SUCCESS', response: Object }
   ;
 

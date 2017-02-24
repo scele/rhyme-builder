@@ -1,15 +1,17 @@
 // @flow
 
 import React from 'react';
-import ReactDOM from 'react-dom';
 import { connect } from 'react-redux';
 import { setEditorState, selectWord, selectRhyme } from './actions';
+// $FlowFixMe
 import { Card, CardMedia, CardText, CardHeader } from 'material-ui/Card';
+// $FlowFixMe
 import Avatar from 'material-ui/Avatar';
 import { Editor } from 'draft-js';
 import logo from './logo.svg';
 import './App.css';
-import { Flex, Block, Table, TableRow, TableCell } from 'jsxstyle';
+import { Flex, Block, Table } from 'jsxstyle';
+import { Video } from './components/Video';
 import type { State, Action, Dispatch } from './types';
 
 type AppStateProps = {
@@ -78,48 +80,16 @@ const VideoCard = ({ word }) => (
   </Card>
 );
 
-const VideoCardsPane = ({word, justifyContent='flex-start', nullWord = { instances: [] }}) =>
+const VideoCardsPane = ({word, justifyContent='flex-start'}) =>
   <Block flexGrow={2} width="100px">
     <Flex flexWrap="wrap" textAlign="left" justifyContent={justifyContent}>
-      {(word || nullWord).instances.map((word, i) =>
-        <VideoCard key={[word.str, i]} word={word} />
-      )}
+      {word ? word.instances.map((wordInstance, i) => // $FlowFixMe
+        <VideoCard key={[word.str, i]} word={wordInstance} />
+      ) : null}
     </Flex>
   </Block>;
 
-class Video extends React.Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      paused: true,
-    };
-  }
-  componentDidMount() {
-    this.videoElement.currentTime = this.props.currentTime;
-  }
-  componentDidUpdate() {
-    this.videoElement.currentTime = this.props.currentTime;
-  }
-  onClick() {
-    this.setState({ paused: !this.videoElement.paused });
-    this.videoElement.paused ? this.videoElement.play() : this.videoElement.pause();
-  }
-  render() {
-    return (
-      <Block position="relative" cursor="pointer">
-        <video preload="metadata" style={{width:300}}
-              onClick={this.onClick.bind(this)} ref={c => this.videoElement = c}>
-          <source src={this.props.src} type='video/mp4'/>
-        </video>
-        { this.state.paused
-          ? <input type="image" src="/play.png" style={{position: 'absolute', left: '50%', top: '50%', margin: '-36px', pointerEvents: 'none'}} />
-          : null }
-      </Block>
-    );
-  }
-}
-
-let App = ({ version, rhymes, onUserType, onWordSelected, onRhymeSelected, onVideoError }: AppProps) => (
+let App = ({ version, rhymes, onUserType, onWordSelected, onRhymeSelected }: AppProps) => (
   <div className="App">
     <div className="App-header">
       <img src={logo} className="App-logo" alt="logo" />
@@ -137,7 +107,7 @@ let App = ({ version, rhymes, onUserType, onWordSelected, onRhymeSelected, onVid
         <Pane>
           {rhymes.currentWords.map((word, i) => (
             <Row
-                onClick={() => onWordSelected(word)}
+                onClick={() => onWordSelected(word.str)}
                 key={word.str}
                 selected={rhymes.selectedWord === word}>
               <Cell>{word.instances.length}</Cell>
@@ -147,15 +117,15 @@ let App = ({ version, rhymes, onUserType, onWordSelected, onRhymeSelected, onVid
           ))}
         </Pane>
         <Pane>
-          {rhymes.selectedWord ? rhymes.selectedWord.rhymingWords.map((word, i) => (
+          {rhymes.currentRhymingWords.map((word, i) => (
             <Row
-                onClick={() => onRhymeSelected(word)}
+                onClick={() => onRhymeSelected(word.str)}
                 key={word.str}
                 selected={rhymes.selectedRhymingWord === word}>
               <Cell>{word.str}</Cell>
               <Cell>{word.instances.length}</Cell>
             </Row>
-          )) : null}
+          ))}
         </Pane>
         <VideoCardsPane word={rhymes.selectedRhymingWord} />
       </Flex>
