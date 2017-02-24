@@ -90,10 +90,10 @@ const updateSelectedWord = (state: State, word: ?string) => updateCurrentRhyming
   selectedWord: findOrOnly(x => x.str === word)(state.currentWords),
 });
 
-const updateCurrentWords = (state) => updateSelectedWord({
+const updateCurrentWords = (state, selectedWord: ?string) => updateSelectedWord({
   ...state,
   currentWords: getCurrentWords(state),
-});
+}, selectedWord);
 
 export default function rhymes(state: State = initialState, action: Action): State {
   switch (action.type) {
@@ -110,7 +110,7 @@ export default function rhymes(state: State = initialState, action: Action): Sta
         },
       };
       if (newState.editor.currentWord !== state.editor.currentWord)
-        return updateCurrentWords(newState);
+        return updateCurrentWords(newState, newState.editor.currentWord);
       else
         return newState;
     case 'LOAD_DATA_SUCCESS':

@@ -62,16 +62,14 @@ const VideoCardsPane = ({word, justifyContent='flex-start'}) =>
 let App = ({ version, rhymes, onUserType, onWordSelected, onRhymeSelected }: AppProps) => (
   <div className="App">
     <div className="App-header">
-      <img src={logo} className="App-logo" alt="logo" />
-      <h2>Welcome to React</h2>
+      <h2>Rhyme Builder</h2>
     </div>
-    <p className="App-intro">
-      Server version: {version.version}.
-    </p>
-      <Editor
-        editorState={rhymes.editor.state}
-        onChange={onUserType}
-      /> 
+      <Block fontSize="150%" margin={30} border="solid 1px grey" padding={10}>
+        <Editor
+          editorState={rhymes.editor.state}
+          onChange={onUserType}
+        />
+      </Block>
       <Flex justifyContent="flex-start">
         <VideoCardsPane word={rhymes.selectedWord} justifyContent="flex-end" />
         <SelectableList style={{width: 400}} value={rhymes.selectedWord}>
