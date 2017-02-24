@@ -70,12 +70,14 @@ getWord = (state: State, expandRhymes: boolean) => (wordStr: string): Word =>
     rhymingWords: expandRhymes ? getRhymingWords(state)(wordStr) : [],
   });
 
+const findOrOnly = (predicate) => (list) => list.length === 1 ? list[0] : find(predicate)(list);
+
 const getCurrentWords = (state: State) =>
   map(getWord(state, true))(state.editor.currentWord ? getStartingWords(state.editor.currentWord, state.words) : []);
 
 const updateSelectedRhymingWord = (state: State, word: ?string) => ({
   ...state,
-  selectedRhymingWord: find(x => x.str === word)(state.currentRhymingWords),
+  selectedRhymingWord: findOrOnly(x => x.str === word)(state.currentRhymingWords),
 });
 
 const updateCurrentRhymingWords = (state: State) => updateSelectedRhymingWord({
@@ -85,7 +87,7 @@ const updateCurrentRhymingWords = (state: State) => updateSelectedRhymingWord({
 
 const updateSelectedWord = (state: State, word: ?string) => updateCurrentRhymingWords({
   ...state,
-  selectedWord: find(x => x.str === word)(state.currentWords),
+  selectedWord: findOrOnly(x => x.str === word)(state.currentWords),
 });
 
 const updateCurrentWords = (state) => updateSelectedWord({
@@ -100,13 +102,17 @@ export default function rhymes(state: State = initialState, action: Action): Sta
     case 'SELECT_RHYME':
       return updateSelectedRhymingWord(state, action.word);
     case 'SET_EDITOR_STATE':
-      return updateCurrentWords({
+      const newState = {
         ...state,
         editor: {
           state: action.editorState,
-          currentWord: getEditorWord(action.editorState),
+          currentWord: getEditorWord(action.editorState) || state.editor.currentWord,
         },
-      });
+      };
+      if (newState.editor.currentWord !== state.editor.currentWord)
+        return updateCurrentWords(newState);
+      else
+        return newState;
     case 'LOAD_DATA_SUCCESS':
       const mapWords = (words, videos) =>
         mapValues(w => ({
