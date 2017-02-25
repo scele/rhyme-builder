@@ -16,7 +16,7 @@ import MuiThemeProvider from 'material-ui/styles/MuiThemeProvider';
 import App from './App';
 import './index.css';
 import rootReducer from './reducers';
-import { loadVersion, loadData } from './actions';
+import { loadData } from './actions';
 
 const store = createStore(
   rootReducer,
@@ -25,7 +25,6 @@ const store = createStore(
   )
 );
 
-store.dispatch(loadVersion());
 store.dispatch(loadData());
 
 ReactDOM.render(

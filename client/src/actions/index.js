@@ -21,19 +21,6 @@ function parseJSON(response) {
   return response.json();
 }
 
-export const loadVersion = () => (dispatch: Dispatch) => {
-  fetch('/api/version', { headers: { 'Accept': 'application/json' } })
-    .then(checkStatus)
-    .then(parseJSON)
-    .then(response => {
-      console.log(response);
-      return dispatch({
-        type: 'LOAD_VERSION_SUCCESS',
-        response
-      });
-    });
-};
-
 const fetchJson = (path) =>
   fetch(path, { headers: { 'Accept': 'application/json' } })
     .then(checkStatus)

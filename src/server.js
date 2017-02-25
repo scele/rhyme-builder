@@ -4,9 +4,16 @@ import bodyParser from 'body-parser';
 import fs from 'fs';
 import path from 'path';
 import { flow, filter, orderBy, take, uniqBy, map, reverse, transform, drop, zipObject } from 'lodash/fp';
+import GoogleCloud from 'google-cloud';
+
 //import type { WordInstance } from './client/src/types';
 
 const app = express();
+
+const gcloud = GoogleCloud({
+  projectId: 'rhyme-builder',
+  keyFilename: './.keys/google-cloud.json',
+});
 
 app.set('port', (process.env.API_PORT || 3001));
 
@@ -21,17 +28,8 @@ app.use(allowCrossDomain);
 app.use(bodyParser.json());
 app.set('json spaces', 2);
 
-const videos = [
-  {
-    actor: 'Juha Sipilä',
-    title: 'Puheenjohtajatentti',
-    text: 'Juha Sipilä/Eduskuntavaalit 2015 - 2015-07-02 - Puheenjohtajatentissä Juha Sipilä (kesk.).txt',
-    video: 'data/Juha Sipilä/long_aac.mp4',
-  }
-];
-
 const getWords = (video) => {
-  const contents = fs.readFileSync(`data/${video.text}`, 'utf8');
+  const contents = video.text;
   // 1 - timestamp
   // 2 - word, including attached delim chars
   // 3 - preceding delim chars
@@ -90,12 +88,13 @@ const getWords = (video) => {
   };
 
   let time = 0;
+  let actor = video.speakers[0];
   tokens.forEach((token, i) => {
     if (token.time) {
       time = token.time;
     } else if (token.word) {
       let obj = {
-        actor: video.actor,
+        actor: actor,
         video: video.video,
         time: time,
         seconds: timeToSeconds(time),
@@ -130,17 +129,24 @@ const buildRhymes = (words) => {
   return zipObject(map(x => x.rhyme)(rhymes), rhymes);
 };
 
+let videos = [];
 let words = {};
-videos.map(v => getWords(v));
-const rhymes = buildRhymes(words);
-for (let word of Object.keys(words)) {
-  for (let i = 0; i < word.length; i++) {
-    const rhyme = word.substring(i);
-    if (rhyme in rhymes) {
-      words[word].rhymes.push(rhyme);
+let rhymes = {};
+const store = gcloud.datastore();
+store.runQuery(store.createQuery('Video')).then(results => {
+  videos = results[0];
+
+  videos.map(v => getWords(v));
+  rhymes = buildRhymes(words);
+  for (let word of Object.keys(words)) {
+    for (let i = 0; i < word.length; i++) {
+      const rhyme = word.substring(i);
+      if (rhyme in rhymes) {
+        words[word].rhymes.push(rhyme);
+      }
     }
   }
-}
+});
 
 app.use('/', express.static('client/build'));
 app.use('/data', express.static('data'));
@@ -152,17 +158,6 @@ app.get('/api/words', (req, res) => {
 });
 app.get('/api/videos', (req, res) => {
   res.json(videos)
-});
-app.get('/api/data', (req, res) => {
-  res.json(getActors().map(a => {
-    return {
-      name: a,
-      videos: getVideos(a).map((x) => `/data/${a}/${x}`)
-    };
-  }));
-});
-app.get('/api/version', (req, res) => {
-  res.json({ version: jsonfile.readFileSync('package.json').version });
 });
 
 app.listen(app.get('port'), () => {

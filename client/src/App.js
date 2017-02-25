@@ -10,7 +10,6 @@ import Avatar from 'material-ui/Avatar';
 // $FlowFixMe
 import { List, ListItem, makeSelectable } from 'material-ui/List';
 import { Editor } from 'draft-js';
-import logo from './logo.svg';
 import './App.css';
 import { Flex, Block } from 'jsxstyle';
 import { Video } from './components/Video';
