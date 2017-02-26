@@ -34,11 +34,13 @@ type AppDispatchProps = {
 
 type AppProps = AppStateProps & AppDispatchProps;
 
+const overflowStyle = {overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'};
+
 const VideoCard = ({ word }) => (
   <Card style={{marginLeft: 10, marginRight: 10, marginBottom: 20}}>
-    <CardHeader avatar={<Avatar>J</Avatar>} title={word.actor} subtitle={word.video.title} />
+    <CardHeader className="card-header" style={{...overflowStyle, width: 300}} avatar={<Avatar>J</Avatar>} title={word.actor} subtitle={word.video.title} />
     <CardMedia>
-      <Video src={word.video.video} currentTime={word.seconds} />
+      <Video src={word.video.lores} currentTime={word.seconds} />
     </CardMedia>
     <CardText>
       <Block textOverflow="ellipsis" width="252px"

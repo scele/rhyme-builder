@@ -51,6 +51,7 @@ export type Video = {
   title: string,
   text: string,
   video: string,
+  lores: string,
 };
 
 

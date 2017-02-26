@@ -135,6 +135,9 @@ let rhymes = {};
 const store = gcloud.datastore();
 store.runQuery(store.createQuery('Video')).then(results => {
   videos = results[0];
+  videos.forEach(x => {
+    x.lores = `https://storage.googleapis.com/rhyme-builder.appspot.com/lores/${x.video}`;
+  });
 
   videos.map(v => getWords(v));
   rhymes = buildRhymes(words);
