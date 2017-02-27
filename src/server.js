@@ -3,7 +3,7 @@ import jsonfile from 'jsonfile';
 import bodyParser from 'body-parser';
 import fs from 'fs';
 import path from 'path';
-import { flow, filter, orderBy, take, uniqBy, map, reverse, transform, drop, zipObject } from 'lodash/fp';
+import { flow, filter, orderBy, take, uniqBy, map, reverse, transform, drop, zipObject, flatten, uniq } from 'lodash/fp';
 import GoogleCloud from 'google-cloud';
 
 //import type { WordInstance } from './client/src/types';
@@ -137,6 +137,7 @@ store.runQuery(store.createQuery('Video')).then(results => {
   videos = results[0];
   videos.forEach(x => {
     x.lores = `https://storage.googleapis.com/rhyme-builder.appspot.com/lores/${x.video}`;
+    x.id = x[store.KEY].id;
   });
 
   videos.map(v => getWords(v));
@@ -161,6 +162,20 @@ app.get('/api/words', (req, res) => {
 });
 app.get('/api/videos', (req, res) => {
   res.json(videos)
+});
+app.post('/api/video/:videoId', (req, res) => {
+  console.log(`Saving video ${req.params.videoId}: `, req.body);
+  const key = store.key(['Video', parseInt(req.params.videoId)]);
+  store.get(key).then(results => {
+    const video = results[0];
+    //store.update({key: key, data: req.body})
+    //  .then(console.log('Saved video.'));
+    res.json({
+      ...video,
+      title: req.body.title,
+      text: req.body.text,
+    });
+  });
 });
 
 app.listen(app.get('port'), () => {

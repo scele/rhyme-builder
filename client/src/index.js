@@ -14,6 +14,7 @@ import MuiThemeProvider from 'material-ui/styles/MuiThemeProvider';
 
 // Application
 import App from './App';
+import VideoList from './components/VideoList';
 import './index.css';
 import rootReducer from './reducers';
 import { loadData } from './actions';
@@ -32,6 +33,7 @@ ReactDOM.render(
     <Provider store={store}>
       <Router history={browserHistory}>
         <Route path='/' component={App} />
+        <Route path='/videos' component={VideoList} />
       </Router>
     </Provider>
   </MuiThemeProvider>,

@@ -1,7 +1,7 @@
 // @flow
 
 import { EditorState } from 'draft-js';
-import { flow, keys, filter, map, flatten, mapValues, find, orderBy, uniqBy } from 'lodash/fp';
+import { flow, keys, filter, map, flatten, mapValues, find, orderBy, uniqBy, take } from 'lodash/fp';
 import type { State, Action, Word, RhymingWord, WordInstance } from '../types';
 
 const initialState: State = {
@@ -13,6 +13,9 @@ const initialState: State = {
   currentRhymingWords: [],
   selectedWord: null,
   selectedRhymingWord: null,
+
+  filteredVideos: [],
+
   words: {},
   rhymes: {},
   videos: [],
@@ -127,6 +130,7 @@ export default function rhymes(state: State = initialState, action: Action): Sta
         words: mapWords(action.words, action.videos),
         rhymes: action.rhymes,
         videos: action.videos,
+        filteredVideos: take(10)(action.videos),
       });
     default:
       return state;

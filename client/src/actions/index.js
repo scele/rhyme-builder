@@ -50,6 +50,15 @@ export const selectRhyme = (word: string) => (dispatch: Dispatch) => {
   });
 };
 
+export const saveVideo = (video: Video) => (dispatch) => {
+  console.log('Saving video: ', video);
+  fetch(`/api/video/${video.id}`, {
+    method: 'post',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(video)
+  }).then(checkStatus);
+};
+
 function flowMaybe(...funcs) {
   const length = funcs ? funcs.length : 0;
   return function(...args) {

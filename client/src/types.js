@@ -66,6 +66,8 @@ export type State = {
   selectedWord: ?Word,
   selectedRhymingWord: ?RhymingWord,
 
+  filteredVideos: Video[],
+
   words: ServerWordMap,
   rhymes: ServerRhymeMap,
   videos: Video[],
