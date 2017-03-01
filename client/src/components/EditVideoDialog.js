@@ -1,13 +1,15 @@
 // @flow
 
 import React from 'react';
+// $FlowFixMe
 import Dialog from 'material-ui/Dialog';
+// $FlowFixMe
 import FlatButton from 'material-ui/FlatButton';
 import { Editor, EditorState, ContentState } from 'draft-js';
 import type { Video } from '../types';
 
 type EditVideoDialogProps = {
-  onClose: ?$Shape<Video> => any,
+  onClose: ?Video => any,
   currentTime: ?number,
   video: Video,
   open: boolean,
@@ -25,17 +27,15 @@ export default class EditVideoDialog extends React.Component {
     };
   }
 
-  onTextChange(editorState: Object) {
+  onTextChange = (editorState: Object) =>
     this.setState({ editorState: editorState });
-  }
 
-  onClose(save: boolean) {
+  onClose = (save: boolean) =>
     this.props.onClose(
       save ? {
         ...this.props.video,
         text: this.state.editorState.getCurrentContent().getPlainText(),
       } : null);
-  }
 
   render() {
     const actions = [

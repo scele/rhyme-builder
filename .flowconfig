@@ -2,6 +2,7 @@
 ./src/
 ./client/src/
 ./client/src/reducers/
+./client/src/components/
 
 [ignore]
 .*/node_modules/.*

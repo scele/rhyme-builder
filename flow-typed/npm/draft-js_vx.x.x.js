@@ -11,7 +11,7 @@ declare module 'draft-js' {
     },
     ContentState: {
       createFromText: string => ContentStateType,
-    }
+    },
     Editor: Object,
     convertFromRaw: Object => ContentStateType,
     convertToRaw: ContentStateType => Object,

@@ -17,9 +17,9 @@
 			"env": {
 				"NODE_ENV": "development"
 			},
-			"externalConsole": false,
+			"console": "internalConsole",
 			"sourceMaps": true,
-			"outDir": "${workspaceRoot}/build"
+			"outFiles": [ "${workspaceRoot}/build/**/*.js" ]
 		},
 		{
 			"name": "upload",
@@ -37,9 +37,9 @@
 			"env": {
 				"NODE_ENV": "development"
 			},
-			"externalConsole": false,
+			"console": "internalConsole",
 			"sourceMaps": true,
-			"outDir": "${workspaceRoot}/build"
+			"outFiles": [ "${workspaceRoot}/build/**/*.js" ]
 		}
 	]
 }

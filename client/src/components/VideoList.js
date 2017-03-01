@@ -3,7 +3,7 @@
 import React from 'react';
 import { connect } from 'react-redux';
 import { Flex, Block, InlineBlock } from 'jsxstyle';
-import { Video } from '../components/Video';
+import { Video as VideoComponent } from '../components/Video';
 import type { State, Action, Dispatch } from '../types';
 // $FlowFixMe
 import Paper from 'material-ui/Paper';
@@ -13,11 +13,15 @@ import FlatButton from 'material-ui/FlatButton';
 import { Card, CardMedia, CardText, CardHeader } from 'material-ui/Card';
 // $FlowFixMe
 import TextField from 'material-ui/TextField';
+// $FlowFixMe
 import Avatar from 'material-ui/Avatar';
+// $FlowFixMe
 import Chip from 'material-ui/Chip';
+// $FlowFixMe
 import AutoComplete from 'material-ui/AutoComplete';
 import { saveVideo } from '../actions';
 import EditVideoDialog from './EditVideoDialog';
+import type { Video } from '../types';
 
 type VideoListStateProps = {
   state: State,
@@ -31,10 +35,18 @@ type VideoListProps = VideoListStateProps & VideoListDispatchProps;
 
 const overflowStyle = {overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'};
 
-
+type EditVideoCardProps = {
+  video: Video,
+  onVideoModified: Video => any,
+};
 
 class EditVideoCard extends React.Component {
-  constructor(props: EditVideoDialogProps) {
+  state = {
+    dialogOpen: false,
+  };
+  props: EditVideoCardProps;
+
+  constructor(props: EditVideoCardProps) {
     super(props);
     this.state = {
       dialogOpen: false,
@@ -44,7 +56,7 @@ class EditVideoCard extends React.Component {
   handleOpen = () => {
     this.setState({dialogOpen: true});
   };
-  handleClose = (modifiedVideo = null) => {
+  handleClose = (modifiedVideo: ?Video = null) => {
     this.setState({dialogOpen: false});
     if (modifiedVideo) {
       this.props.onVideoModified(modifiedVideo);
@@ -58,23 +70,23 @@ class EditVideoCard extends React.Component {
     });
   };
   render() {
-    const video = this.props.video;
+    const video: Video = this.props.video;
     return (
       <Block style={{width: 920, margin: '0 auto'}}>
         <Paper style={{height: 180, marginTop: 20, textAlign: 'left'}} zDepth={1} rounded={false}>
-          <Video src={video.lores} width={320} />
+          <VideoComponent src={video.lores} width={320} currentTime={video.firstAnnotationTime} />
           <InlineBlock style={{width: 560, verticalAlign: 'top', padding: 20}}>
             <FlatButton label="Subtitles" style={{float: 'right'}} onTouchTap={this.handleOpen} />
             <TextField name="title" floatingLabelText="Title"
                        onBlur={this.handleTitleBlur} defaultValue={video.title} />
-            <Block marginTop={20}>
+            <Flex marginTop={20}>
               {video.speakers.map(speaker => 
-                <Chip key={speaker}>
-                <Avatar>{speaker[0].toUpperCase()}</Avatar>
-                {speaker}
+                <Chip key={speaker} style={{margin: 5}}>
+                  <Avatar>{speaker[0].toUpperCase()}</Avatar>
+                  {speaker}
                 </Chip>
               )}
-            </Block>
+            </Flex>
           </InlineBlock>
         </Paper>
         <EditVideoDialog onClose={this.handleClose} video={video} open={this.state.dialogOpen} />
@@ -82,28 +94,6 @@ class EditVideoCard extends React.Component {
     );
   }
 };
-
-
-const VideoCard = ({ video, onVideoModified }) => (
-  <Block style={{width: 920, margin: '0 auto'}}>
-    <Paper style={{height: 180, marginTop: 20, textAlign: 'left'}} zDepth={1} rounded={false}>
-      <Video src={video.lores} width={320} />
-      <InlineBlock style={{width: 560, verticalAlign: 'top', padding: 20}}>
-        <FlatButton label="Subtitles" style={{float: 'right'}} />
-        <TextField name="title" floatingLabelText="Title" onChange={(event, newValue) => onVideoModified({...video, title: newValue})} />
-        <Block marginTop={20}>
-          {video.speakers.map(speaker => 
-            <Chip key={speaker}>
-            <Avatar>{speaker[0].toUpperCase()}</Avatar>
-            {speaker}
-            </Chip>
-          )}
-        </Block>
-      </InlineBlock>
-    </Paper>
-    <EditVideoDialog onClose={(save) => console.log('close')} video={video} open={false} />
-  </Block>
-);
 
 let VideoList = ({ state, onVideoModified }: VideoListProps) => (
   <div className="App">

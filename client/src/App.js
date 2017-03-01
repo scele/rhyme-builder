@@ -14,6 +14,7 @@ import './App.css';
 import { Flex, Block } from 'jsxstyle';
 import { Video } from './components/Video';
 import type { State, Action, Dispatch } from './types';
+// $FlowFixMe
 import injectTapEventPlugin from 'react-tap-event-plugin';
 
 type AppStateProps = {

@@ -1,12 +1,16 @@
+// @flow
+
 import express from 'express';
 import jsonfile from 'jsonfile';
 import bodyParser from 'body-parser';
 import fs from 'fs';
 import path from 'path';
-import { flow, filter, orderBy, take, uniqBy, map, reverse, transform, drop, zipObject, flatten, uniq } from 'lodash/fp';
+import { flow, filter, orderBy, take, uniqBy, map, mapValues, reverse, transform, drop, zipObject, flatten, uniq, reduce, values, keyBy, keys, groupBy } from 'lodash/fp';
+// $FlowFixMe
 import GoogleCloud from 'google-cloud';
+import type { $Request, $Response } from 'express';
 
-//import type { WordInstance } from './client/src/types';
+import type { WordInstance, Video, ServerWordMap, ServerVideoMap } from '../client/src/types';
 
 const app = express();
 
@@ -15,10 +19,10 @@ const gcloud = GoogleCloud({
   keyFilename: './.keys/google-cloud.json',
 });
 
-app.set('port', (process.env.API_PORT || 3001));
+const port: number = parseInt(process.env.API_PORT) || 3001;
 
 // Allow requests from the client development server.
-const allowCrossDomain = function (req, res, next) {
+const allowCrossDomain = (req: $Request, res: $Response, next) => {
   res.header('Access-Control-Allow-Origin', 'http://localhost:3000');
   res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE');
   res.header('Access-Control-Allow-Headers', 'Content-Type');
@@ -28,84 +32,113 @@ app.use(allowCrossDomain);
 app.use(bodyParser.json());
 app.set('json spaces', 2);
 
-const getWords = (video) => {
+const parseVideo = (video: Video): Video => {
   const contents = video.text;
   // 1 - timestamp
-  // 2 - word, including attached delim chars
-  // 3 - preceding delim chars
-  // 4 - word
-  // 5 - succeeding delim chars
-  // 6 - standalone non-whitespace chars
-  const re = /(\d+:\d+:?\d*)|((\S*?)([\w\u00C0-\u00D6\u00D8-\u00F6]+)(\S*))|(\S+)/gu;
+  // 2 - speaker
+  // 3 - word, including attached delim chars
+  // 4 - preceding delim chars
+  // 5 - word
+  // 6 - succeeding delim chars
+  // 7 - standalone non-whitespace chars
+  type Token = {
+    time: ?string,
+    speaker: ?string,
+    word: ?string,
+    wordAndChars: ?string,
+    index: number,
+  };
+  const re = /(\d+:\d+:?\d*)|\[([\w\u00C0-\u00D6\u00D8-\u00F6\s\-]+)\]|((\S*?)([\w\u00C0-\u00D6\u00D8-\u00F6\-]+)(\S*))|(\S+)/gu;
   let match;
-  const tokens = [];
+  const tokens: Token[] = [];
   while ((match = re.exec(contents)) !== null) {
     tokens.push({
       time: match[1],
-      word: match[4] ? match[4].toLowerCase() : null,
-      wordAndChars: match[2],
-      index: match.index + (match[3] ? match[3].length : 0),
+      speaker: match[2],
+      word: match[5] ? match[5].toLowerCase() : null,
+      wordAndChars: match[3],
+      index: match.index + (match[4] ? match[4].length : 0),
     });
   }
 
   const takeTextLeftUntil = (length) => (tokens) =>
-    transform((folded, token) => {
-      if (folded.text.length > 0 && folded.text.length + token.length > length)
-        return false;
-      folded.text = token + ' ' + folded.text;
+    transform((folded, token: Token) => {
+      if (token.speaker)
+        return false; // Speaker changed, don't take any more words
+      if (token.wordAndChars) {
+        if (folded.text.length > 0 && folded.text.length + token.wordAndChars.length > length)
+          return false; // Taking this word would overflow requested length
+        folded.text = token.wordAndChars + ' ' + folded.text;
+      }
     }, { text: '' })(tokens).text.trim();
 
   const takeTextRightUntil = (length) => (tokens) =>
-    transform((folded, token) => {
-      if (folded.text.length > 0 && folded.text.length + token.length > length)
-        return false;
-      folded.text = folded.text + ' ' + token;
+    transform((folded, token: Token) => {
+      if (token.speaker)
+        return false; // Speaker changed, don't take any more words
+      if (token.wordAndChars) {
+        if (folded.text.length > 0 && folded.text.length + token.wordAndChars.length > length)
+          return false; // Taking this word would overflow requested length
+        folded.text = folded.text + ' ' + token.wordAndChars;
+      }
     }, { text: '' })(tokens).text.trim();
 
   const getContext = (initialToken, contextLeft, contextRight) => tokens => flow(
     take(initialToken),
-    filter(token => token.wordAndChars),
-    map(token => token.wordAndChars),
     reverse,
     takeTextLeftUntil(contextLeft)
   )(tokens) + ' ' + flow(
     drop(initialToken),
-    filter(token => token.wordAndChars),
-    map(token => token.wordAndChars),
     takeTextRightUntil(contextRight)
   )(tokens);
 
-  const timeRegex = /(\d\d):(\d\d):(\d\d)/;
+  const timeRegex = /(\d\d)?:?(\d\d):(\d\d)/;
   const timeToSeconds = (time) => {
     if (!time)
       return 0;
     const m = time.match(timeRegex);
     if (m) {
-      return 60 * 60 * parseInt(m[1]) + 60 * parseInt(m[2]) + parseInt(m[3]);
+      return 60 * 60 * parseInt(m[1] || 0) + 60 * parseInt(m[2]) + parseInt(m[3]);
     } else {
       return 0;
     }
   };
 
   let time = 0;
-  let actor = video.speakers[0];
+  let firstTime = 0;
+  let speaker = "Unknown";
+  let speakers = {};
+  const instances = [];
   tokens.forEach((token, i) => {
     if (token.time) {
       time = token.time;
+      if (!firstTime)
+        firstTime = time;
+    } else if (token.speaker) {
+      speaker = token.speaker;
+      speakers[speaker] = true;
     } else if (token.word) {
       let obj = {
-        actor: actor,
-        video: video.video,
+        word: token.word,
+        actor: speaker,
+        video: video.id,
         time: time,
         seconds: timeToSeconds(time),
         context: getContext(i, 10, 50)(tokens),
       };
-      (words[token.word] || (words[token.word] = { word: token.word, rhymes: [], instances: [] })).instances.push(obj);
+      instances.push(obj);
+      //(words[token.word] || (words[token.word] = { word: token.word, rhymes: [], instances: [] })).instances.push(obj);
     }
   });
+  return {
+    ...video,
+    speakers: keys(speakers),
+    wordInstances: instances,
+    firstAnnotationTime: timeToSeconds(firstTime),
+  };
 };
 
-const buildRhymes = (words) => {
+const buildRhymes = (words: ServerWordMap) => {
   let rhymes = {};
   for (let word in words) {
     for (let i = 0; i < word.length; i++) {
@@ -129,19 +162,23 @@ const buildRhymes = (words) => {
   return zipObject(map(x => x.rhyme)(rhymes), rhymes);
 };
 
-let videos = [];
-let words = {};
-let rhymes = {};
-const store = gcloud.datastore();
-store.runQuery(store.createQuery('Video')).then(results => {
-  videos = results[0];
-  videos.forEach(x => {
-    x.lores = `https://storage.googleapis.com/rhyme-builder.appspot.com/lores/${x.video}`;
-    x.id = x[store.KEY].id;
-  });
+// Mutable state.
+const state = {
+  videos: {},
+  words: {},
+  rhymes: {},
+};
 
-  videos.map(v => getWords(v));
-  rhymes = buildRhymes(words);
+const updateWordsAndRhymes = (state) => {
+  const mapValuesNoCap = mapValues.convert({ cap: false });
+  const words: ServerWordMap = flow(
+    map(video => video.wordInstances),
+    flatten,
+    groupBy(instance => instance.word),
+    mapValuesNoCap((instances, word) => ({ word: word, rhymes: [], instances: instances }))
+  )(state.videos);
+
+  const rhymes = buildRhymes(words);
   for (let word of Object.keys(words)) {
     for (let i = 0; i < word.length; i++) {
       const rhyme = word.substring(i);
@@ -150,34 +187,73 @@ store.runQuery(store.createQuery('Video')).then(results => {
       }
     }
   }
+  return {
+    ...state,
+    words: words,
+    rhymes: rhymes,
+  }
+};
+
+const updateState = (state, newVideos: Video[]) => {
+  const videos: ServerVideoMap = flow(
+    mapValues(video => ({
+      ...video,
+      lores: `https://storage.googleapis.com/rhyme-builder.appspot.com/lores/${video.video}`,
+      id: video.id || video[store.KEY].id,
+    })),
+    mapValues(parseVideo),
+    keyBy(video => video.id),
+  )(newVideos);
+
+  const newState = updateWordsAndRhymes({
+    ...state,
+    videos: {
+      ...state.videos,
+      ...videos,
+    },
+  });
+  state.videos = newState.videos;
+  state.words = newState.words;
+  state.rhymes = newState.rhymes;
+}
+
+const store = gcloud.datastore();
+store.runQuery(store.createQuery('Video')).then(results => {
+  updateState(state, results[0]);
 });
+
+const asObject = (x: mixed): Object => typeof(x) === 'object' ? (x || {}) : {};
 
 app.use('/', express.static('client/build'));
 app.use('/data', express.static('data'));
-app.get('/api/rhymes', (req, res) => {
-  res.json(rhymes);
+app.get('/api/rhymes', (req: $Request, res: $Response) => {
+  res.json(state.rhymes);
 });
-app.get('/api/words', (req, res) => {
-  res.json(words);
+app.get('/api/words', (req: $Request, res: $Response) => {
+  res.json(state.words);
 });
-app.get('/api/videos', (req, res) => {
-  res.json(videos)
+app.get('/api/videos', (req: $Request, res: $Response) => {
+  res.json(mapValues(x => ({...x, wordInstances: []}))(state.videos));
 });
-app.post('/api/video/:videoId', (req, res) => {
+app.post('/api/video/:videoId', (req: $Request, res: $Response) => {
   console.log(`Saving video ${req.params.videoId}: `, req.body);
   const key = store.key(['Video', parseInt(req.params.videoId)]);
   store.get(key).then(results => {
-    const video = results[0];
-    //store.update({key: key, data: req.body})
-    //  .then(console.log('Saved video.'));
-    res.json({
-      ...video,
-      title: req.body.title,
-      text: req.body.text,
+    const storedVideo = results[0];
+    const userVideo: Video = asObject(req.body);
+    const newVideo = {
+      ...storedVideo,
+      title: userVideo.title,
+      text: userVideo.text,
+    };
+    store.update({key: key, data: newVideo}).then(data => {
+      console.log('Saved video: ', data[0]);
+      updateState(state, [newVideo]);
+      res.json(state.videos[key.id]);
     });
   });
 });
 
-app.listen(app.get('port'), () => {
-  console.log(`Find the server at: http://localhost:${app.get('port')}/`); // eslint-disable-line no-console
+app.listen(port, () => {
+  console.log(`Find the server at: http://localhost:${port}/`); // eslint-disable-line no-console
 });

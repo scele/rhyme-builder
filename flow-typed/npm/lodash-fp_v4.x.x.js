@@ -62,7 +62,20 @@ declare module 'lodash/fp' {
     zipObject(props: Array<any>): (values: Array<any>) => Object;
     orderBy<T>(iteratees: Iteratee<T>|Array<Iteratee<T>>|string, orders?: Array<'asc'|'desc'>|string): (array: ?Array<T>) => Array<T>;
     orderBy<V, T: Object>(iteratees: OIteratee<*>|Array<OIteratee<*>>|string, orders?: Array<'asc'|'desc'>|string): (object: T) => Array<V>;
-  }
+    reduce<T: Object, U>(iteratee: (accumulator: U, value: any) => U): (accumulator: U) => (object: T) => U;
+    reduce<T, U>(iteratee: (accumulator: U, value: T) => U): (accumulator: U) => (array: ?Array<T>) => U;
+    reduceRight<T, U>(iteratee: (accumulator: U, value: T) => U): (accumulator: U) => (array: ?Array<T>) => U;
+    reduceRight<T: Object, U>(iteratee: (accumulator: U, value: any) => U): (accumulator: U) => (object: T) => U;
+    transform(iteratee: OIteratee<*>): (accumulator: any) => (collection: Object|Array<any>) => any;
+    drop<T>(n: number): (array: ?Array<T>) => Array<T>;
+    reverse<T>(array: ?Array<T>): Array<T>;
+    take<T>(n: number): (array: ?Array<T>) => Array<T>;
+    values(object?: ?Object): Array<any>;
+    keyBy<T, V>(iteratee: Iteratee2<T, V>): (array: ?Array<T>) => {[key: V]: T};
+    keyBy<V, T: Object>(iteratee: OIteratee<T>): (object: T) => Object;
+    groupBy<T>(iteratee: Iteratee<T>): (array: ?Array<T>) => Object;
+    groupBy<T: Object>(iteratee?: OIteratee<T>): (object: T) => Object;
+}
 
   declare var exports: Lodash;
 }

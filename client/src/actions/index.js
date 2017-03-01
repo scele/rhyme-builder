@@ -1,7 +1,7 @@
 // @flow
 
 import { zipObject } from 'lodash/fp';
-import type { Dispatch } from '../types';
+import type { Dispatch, Video } from '../types';
 import { EditorState, convertFromRaw, convertToRaw } from 'draft-js';
 
 function checkStatus(response) {
@@ -50,13 +50,20 @@ export const selectRhyme = (word: string) => (dispatch: Dispatch) => {
   });
 };
 
-export const saveVideo = (video: Video) => (dispatch) => {
+export const saveVideo = (video: Video) => (dispatch: Dispatch) => {
   console.log('Saving video: ', video);
   fetch(`/api/video/${video.id}`, {
-    method: 'post',
+    method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(video)
-  }).then(checkStatus);
+  }).then(checkStatus)
+    .then(parseJSON)
+    .then(response =>
+      dispatch({
+        type: 'VIDEO_UPDATED',
+        video: response,
+      })
+    );
 };
 
 function flowMaybe(...funcs) {

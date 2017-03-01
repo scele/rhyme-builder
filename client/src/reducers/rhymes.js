@@ -1,7 +1,7 @@
 // @flow
 
 import { EditorState } from 'draft-js';
-import { flow, keys, filter, map, flatten, mapValues, find, orderBy, uniqBy, take } from 'lodash/fp';
+import { flow, keys, values, filter, map, flatten, mapValues, find, orderBy, uniqBy, take, zipObject } from 'lodash/fp';
 import type { State, Action, Word, RhymingWord, WordInstance } from '../types';
 
 const initialState: State = {
@@ -18,7 +18,7 @@ const initialState: State = {
 
   words: {},
   rhymes: {},
-  videos: [],
+  videos: {},
 };
 
 const getStartingWords = (search, words) =>
@@ -98,6 +98,11 @@ const updateCurrentWords = (state, selectedWord: ?string) => updateSelectedWord(
   currentWords: getCurrentWords(state),
 }, selectedWord);
 
+const updateFilteredVideos = (state: State): State => ({
+  ...state,
+  filteredVideos: take(10)(values(state.videos)),
+})
+
 export default function rhymes(state: State = initialState, action: Action): State {
   switch (action.type) {
     case 'SELECT_WORD':
@@ -120,17 +125,27 @@ export default function rhymes(state: State = initialState, action: Action): Sta
       const mapWords = (words, videos) =>
         mapValues(w => ({
           ...w,
-          instances: w.instances.map((wi) => ({
+          instances: w.instances.map(wi => ({
             ...wi,
-            video: find(v => v.video === wi.video)(videos),
+            video: videos[wi.video],
           })),
         }))(words);
-      return updateCurrentWords({
+      return flow(
+        updateCurrentWords,
+        updateFilteredVideos,
+      )({
         ...state,
         words: mapWords(action.words, action.videos),
         rhymes: action.rhymes,
         videos: action.videos,
-        filteredVideos: take(10)(action.videos),
+      });
+    case 'VIDEO_UPDATED':
+      return updateFilteredVideos({
+        ...state,
+        videos: {
+          ...state.videos,
+          ...zipObject([action.video.id], [action.video]),
+        },
       });
     default:
       return state;

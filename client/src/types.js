@@ -26,6 +26,7 @@ export type ServerRhyme = {
 
 export type ServerWordMap = {[id:string]: ServerWord};
 export type ServerRhymeMap = {[id:string]: ServerRhyme};
+export type ServerVideoMap = {[id:number]: Video};
 
 // Types that we use on the client
 
@@ -52,6 +53,8 @@ export type Video = {
   text: string,
   video: string,
   lores: string,
+  id: number,
+  firstAnnotationTime: number,
 };
 
 
@@ -70,14 +73,15 @@ export type State = {
 
   words: ServerWordMap,
   rhymes: ServerRhymeMap,
-  videos: Video[],
+  videos: ServerVideoMap,
 };
 
 export type Action =
     { type: 'SET_EDITOR_STATE', editorState: Object }
-  | { type: 'LOAD_DATA_SUCCESS', words: ServerWordMap, rhymes: ServerRhymeMap, videos: Video[] }
+  | { type: 'LOAD_DATA_SUCCESS', words: ServerWordMap, rhymes: ServerRhymeMap, videos: ServerVideoMap }
   | { type: 'SELECT_RHYME', word: ?string }
   | { type: 'SELECT_WORD', word: ?string }
+  | { type: 'VIDEO_UPDATED', video: Video }
   | { type: 'LOAD_VERSION_SUCCESS', response: Object }
   ;
 
