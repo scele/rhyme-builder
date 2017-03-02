@@ -4,21 +4,17 @@ import React from 'react';
 import { connect } from 'react-redux';
 import { Flex, Block, InlineBlock } from 'jsxstyle';
 import { Video as VideoComponent } from '../components/Video';
-import type { State, Action, Dispatch } from '../types';
+import type { State, Dispatch } from '../types';
 // $FlowFixMe
 import Paper from 'material-ui/Paper';
 // $FlowFixMe
 import FlatButton from 'material-ui/FlatButton';
-// $FlowFixMe
-import { Card, CardMedia, CardText, CardHeader } from 'material-ui/Card';
 // $FlowFixMe
 import TextField from 'material-ui/TextField';
 // $FlowFixMe
 import Avatar from 'material-ui/Avatar';
 // $FlowFixMe
 import Chip from 'material-ui/Chip';
-// $FlowFixMe
-import AutoComplete from 'material-ui/AutoComplete';
 import { saveVideo } from '../actions';
 import EditVideoDialog from './EditVideoDialog';
 import type { Video } from '../types';
@@ -32,8 +28,6 @@ type VideoListDispatchProps = {
 };
 
 type VideoListProps = VideoListStateProps & VideoListDispatchProps;
-
-const overflowStyle = {overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'};
 
 type EditVideoCardProps = {
   video: Video,

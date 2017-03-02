@@ -1,7 +1,7 @@
 // @flow
 
 import React from 'react';
-import { Block, InlineBlock } from 'jsxstyle';
+import { InlineBlock } from 'jsxstyle';
 
 export class Video extends React.Component {
   videoElement: HTMLVideoElement;
