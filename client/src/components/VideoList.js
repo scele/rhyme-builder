@@ -83,7 +83,7 @@ class EditVideoCard extends React.Component {
             </Flex>
           </InlineBlock>
         </Paper>
-        <EditVideoDialog onClose={this.handleClose} video={video} open={this.state.dialogOpen} />
+        <EditVideoDialog onClose={this.handleClose} video={video} open={this.state.dialogOpen} currentTime={video.firstAnnotationTime} />
       </Block>
     );
   }

@@ -1,6 +1,7 @@
 // @flow
 
 import React from 'react';
+import { Block, InlineBlock } from 'jsxstyle';
 // $FlowFixMe
 import Dialog from 'material-ui/Dialog';
 // $FlowFixMe
@@ -61,11 +62,14 @@ export default class EditVideoDialog extends React.Component {
           open={this.props.open}
           onRequestClose={x => this.onClose(false)}
           autoScrollBodyContent={true}
+          contentStyle={{width: 1400, maxWidth: 'none'}}
         >
-          <video preload="metadata" style={{width:'640px'}} controls="controls">
+          <video preload="metadata" style={{width: 640, position: 'fixed'}} controls="controls">
             <source src={this.props.video.lores} type='video/mp4'/>
           </video>
-          <Editor editorState={this.state.editorState} onChange={this.onTextChange} />
+          <InlineBlock marginLeft={640} width={640} height={360} padding={20}>
+            <Editor editorState={this.state.editorState} onChange={this.onTextChange} />
+          </InlineBlock>
         </Dialog>
       </div>
     );

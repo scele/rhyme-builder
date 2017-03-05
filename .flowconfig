@@ -3,6 +3,4 @@
 ./client/src/
 ./client/src/reducers/
 ./client/src/components/
-
-[ignore]
-.*/node_modules/.*
+./client/node_modules/draft-js
