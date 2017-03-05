@@ -1,5 +1,6 @@
 // @flow
 import type { Store as ReduxStore, Dispatch as ReduxDispatch } from 'redux';
+import type { Action as VideoInspectorAction } from './actions/videoInspector';
 
 // https://flowtype.org/blog/2016/10/04/Property-Variance.html
 
@@ -83,6 +84,7 @@ export type Action =
   | { type: 'SELECT_WORD', word: ?string }
   | { type: 'VIDEO_UPDATED', video: Video }
   | { type: 'LOAD_VERSION_SUCCESS', response: Object }
+  | VideoInspectorAction
   ;
 
 export type Store = ReduxStore<State, Action>;

@@ -140,12 +140,11 @@ export default function rhymes(state: State = initialState, action: Action): Sta
         videos: action.videos,
       });
     case 'VIDEO_UPDATED':
+      const updatedVideos = { ...state.videos };
+      updatedVideos[action.video.id] = action.video;
       return updateFilteredVideos({
         ...state,
-        videos: {
-          ...state.videos,
-          ...zipObject([action.video.id], [action.video]),
-        },
+        videos: updatedVideos,
       });
     default:
       return state;

@@ -5,18 +5,14 @@ import { connect } from 'react-redux';
 import { Flex, Block, InlineBlock } from 'jsxstyle';
 import { Video as VideoComponent } from '../components/Video';
 import type { State, Dispatch } from '../types';
-// $FlowFixMe
 import Paper from 'material-ui/Paper';
-// $FlowFixMe
 import FlatButton from 'material-ui/FlatButton';
-// $FlowFixMe
 import TextField from 'material-ui/TextField';
-// $FlowFixMe
 import Avatar from 'material-ui/Avatar';
-// $FlowFixMe
 import Chip from 'material-ui/Chip';
 import { saveVideo } from '../actions';
-import EditVideoDialog from './EditVideoDialog';
+import { open as openVideoInspector } from '../actions/videoInspector';
+import VideoInspector from './VideoInspector';
 import type { Video } from '../types';
 
 type VideoListStateProps = {
@@ -25,6 +21,7 @@ type VideoListStateProps = {
 
 type VideoListDispatchProps = {
   onVideoModified: Video => any,
+  openVideoInspector: Video => any,
 };
 
 type VideoListProps = VideoListStateProps & VideoListDispatchProps;
@@ -32,30 +29,11 @@ type VideoListProps = VideoListStateProps & VideoListDispatchProps;
 type EditVideoCardProps = {
   video: Video,
   onVideoModified: Video => any,
+  openVideoInspector: Function,
 };
 
 class EditVideoCard extends React.Component {
-  state = {
-    dialogOpen: false,
-  };
   props: EditVideoCardProps;
-
-  constructor(props: EditVideoCardProps) {
-    super(props);
-    this.state = {
-      dialogOpen: false,
-    };
-  }
-
-  handleOpen = () => {
-    this.setState({dialogOpen: true});
-  };
-  handleClose = (modifiedVideo: ?Video = null) => {
-    this.setState({dialogOpen: false});
-    if (modifiedVideo) {
-      this.props.onVideoModified(modifiedVideo);
-    }
-  };
 
   handleTitleBlur = (event) => {
     this.props.onVideoModified({
@@ -70,7 +48,7 @@ class EditVideoCard extends React.Component {
         <Paper style={{height: 180, marginTop: 20, textAlign: 'left'}} zDepth={1} rounded={false}>
           <VideoComponent src={video.lores} width={320} currentTime={video.firstAnnotationTime} />
           <InlineBlock style={{width: 560, verticalAlign: 'top', padding: 20}}>
-            <FlatButton label="Subtitles" style={{float: 'right'}} onTouchTap={this.handleOpen} />
+            <FlatButton label="Subtitles" style={{float: 'right'}} onTouchTap={this.props.openVideoInspector} />
             <TextField name="title" floatingLabelText="Title"
                        onBlur={this.handleTitleBlur} defaultValue={video.title} />
             <Flex marginTop={20}>
@@ -83,22 +61,22 @@ class EditVideoCard extends React.Component {
             </Flex>
           </InlineBlock>
         </Paper>
-        <EditVideoDialog onClose={this.handleClose} video={video} open={this.state.dialogOpen} currentTime={video.firstAnnotationTime} />
       </Block>
     );
   }
 };
 
-let VideoList = ({ state, onVideoModified }: VideoListProps) => (
+let VideoList = ({ state, onVideoModified, openVideoInspector }: VideoListProps) => (
   <div className="App">
     <div className="App-header">
       <h2>Rhyme Builder</h2>
     </div>
     <Block>
       {state.filteredVideos.map(video =>
-        <EditVideoCard video={video} key={video.video} onVideoModified={onVideoModified} />
+        <EditVideoCard video={video} key={video.video} onVideoModified={onVideoModified} openVideoInspector={x => openVideoInspector(video)} />
       )}
     </Block>
+    <VideoInspector />
   </div>
 );
 
@@ -106,6 +84,7 @@ VideoList = connect(
   (state): VideoListStateProps => ({ state: state.rhymes }),
   (dispatch: Dispatch): VideoListDispatchProps => ({
     onVideoModified: video => saveVideo(video)(dispatch),
+    openVideoInspector: video => openVideoInspector(video)(dispatch),
   })
 )(VideoList);
 

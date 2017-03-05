@@ -3,19 +3,17 @@
 import React from 'react';
 import { connect } from 'react-redux';
 import { setEditorState, selectWord, selectRhyme } from './actions';
-// $FlowFixMe
 import { Card, CardMedia, CardText, CardHeader } from 'material-ui/Card';
-// $FlowFixMe
 import Avatar from 'material-ui/Avatar';
-// $FlowFixMe
 import { List, ListItem, makeSelectable } from 'material-ui/List';
 import { Editor } from 'draft-js';
 import './App.css';
 import { Flex, Block } from 'jsxstyle';
 import { Video } from './components/Video';
+import VideoInspector from './components/VideoInspector';
 import type { State, Action, Dispatch } from './types';
-// $FlowFixMe
 import injectTapEventPlugin from 'react-tap-event-plugin';
+import { open as openVideoInspector } from './actions/videoInspector';
 
 type AppStateProps = {
   rhymes: State,
@@ -37,7 +35,7 @@ type AppProps = AppStateProps & AppDispatchProps;
 
 const overflowStyle = {overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'};
 
-const VideoCard = ({ word }) => (
+let VideoCard = ({ word, open }) => (
   <Card style={{marginLeft: 10, marginRight: 10, marginBottom: 20}}>
     <CardHeader className="card-header" style={{...overflowStyle, width: 300}} avatar={<Avatar>J</Avatar>} title={word.actor} subtitle={word.video.title} />
     <CardMedia>
@@ -46,11 +44,17 @@ const VideoCard = ({ word }) => (
     <CardText>
       <Block textOverflow="ellipsis" width="252px"
              whiteSpace="nowrap" overflow="hidden">
-        {word.context}
+        <span onClick={x => open(word.video)}>{word.context}</span>
       </Block>
     </CardText>
   </Card>
 );
+VideoCard = connect(
+  (state) => ({}),
+  (dispatch: Dispatch) => ({
+    open: (video) => openVideoInspector(video)(dispatch),
+  })
+)(VideoCard);
 
 const VideoCardsPane = ({word, justifyContent='flex-start'}) =>
   <Block flexGrow={2} width="100px">
@@ -66,40 +70,41 @@ let App = ({ version, rhymes, onUserType, onWordSelected, onRhymeSelected }: App
     <div className="App-header">
       <h2>Rhyme Builder</h2>
     </div>
-      <Block fontSize="150%" margin={30} border="solid 1px grey" padding={10}>
-        <Editor
-          editorState={rhymes.editor.state}
-          onChange={onUserType}
-        />
-      </Block>
-      <Flex justifyContent="flex-start">
-        <VideoCardsPane word={rhymes.selectedWord} justifyContent="flex-end" />
-        <SelectableList style={{width: 400}} value={rhymes.selectedWord}>
-          {rhymes.currentWords.map((word, i) => (
-            <ListItem
-                onClick={() => onWordSelected(word.str)}
-                key={word.str}
-                value={word}
-                selected={rhymes.selectedWord === word}
-                primaryText={word.str}
-                leftIcon={<div>{word.instances.length}</div>}
-                rightIcon={<div>{word.rhymingWords.length}</div>} />
-          ))}
-        </SelectableList>
-        <SelectableList style={{width: 400}} value={rhymes.selectedRhymingWord}>
-          {rhymes.currentRhymingWords.map((word, i) => (
-            <ListItem
-                onClick={() => onRhymeSelected(word.str)}
-                key={word.str}
-                value={word}
-                selected={rhymes.selectedRhymingWord === word}
-                primaryText={word.str}
-                leftIcon={<div></div>}
-                rightIcon={<div>{word.instances.length}</div>} />
-          ))}
-        </SelectableList>
-        <VideoCardsPane word={rhymes.selectedRhymingWord} />
-      </Flex>
+    <Block fontSize="150%" margin={30} border="solid 1px grey" padding={10}>
+      <Editor
+        editorState={rhymes.editor.state}
+        onChange={onUserType}
+      />
+    </Block>
+    <Flex justifyContent="flex-start">
+      <VideoCardsPane word={rhymes.selectedWord} justifyContent="flex-end" />
+      <SelectableList style={{width: 400}} value={rhymes.selectedWord}>
+        {rhymes.currentWords.map((word, i) => (
+          <ListItem
+              onClick={() => onWordSelected(word.str)}
+              key={word.str}
+              value={word}
+              selected={rhymes.selectedWord === word}
+              primaryText={word.str}
+              leftIcon={<div>{word.instances.length}</div>}
+              rightIcon={<div>{word.rhymingWords.length}</div>} />
+        ))}
+      </SelectableList>
+      <SelectableList style={{width: 400}} value={rhymes.selectedRhymingWord}>
+        {rhymes.currentRhymingWords.map((word, i) => (
+          <ListItem
+              onClick={() => onRhymeSelected(word.str)}
+              key={word.str}
+              value={word}
+              selected={rhymes.selectedRhymingWord === word}
+              primaryText={word.str}
+              leftIcon={<div></div>}
+              rightIcon={<div>{word.instances.length}</div>} />
+        ))}
+      </SelectableList>
+      <VideoCardsPane word={rhymes.selectedRhymingWord} />
+    </Flex>
+    <VideoInspector />
   </div>
 );
 
