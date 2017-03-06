@@ -2,16 +2,20 @@
 
 import React from 'react';
 import { connect } from 'react-redux';
-import { Block, InlineBlock } from 'jsxstyle';
+import {  InlineBlock } from 'jsxstyle';
 import Dialog from 'material-ui/Dialog';
 import FlatButton from 'material-ui/FlatButton';
-import { Editor, EditorState, ContentState } from 'draft-js';
+import { Editor } from 'draft-js';
 
-import type { Dispatch, State } from '../actions/videoInspector';
+// Actions
+import { close, setEditorState } from './actions';
+import { saveVideo } from '../actions';
+
+// Types
+import type { Dispatch } from './actions';
+import type { State } from './reducer';
 import type { Video } from '../types';
-import  { close, save, setEditorState } from '../actions/videoInspector';
 
-type Props = StateProps & DispatchProps;
 type StateProps = {
   state: State,
 };
@@ -19,6 +23,7 @@ type DispatchProps = {
   onEditorStateChange: Function,
   onClose: ?Video => any,
 };
+type Props = StateProps & DispatchProps;
 
 let VideoInspectorDialog = ({ state, onClose, onEditorStateChange }: Props) => {
   const actions = [
@@ -57,11 +62,11 @@ let VideoInspectorDialog = ({ state, onClose, onEditorStateChange }: Props) => {
 }
 
 VideoInspectorDialog = connect(
-  (state) => ({ state: state.videoInspector }),
+  (state): StateProps => ({ state: state.videoInspector }),
   (dispatch: Dispatch): DispatchProps => ({
     onClose: video => {
       if (video) {
-        save(video)(dispatch);
+        saveVideo(video)(dispatch);
       }
       close()(dispatch);
     },

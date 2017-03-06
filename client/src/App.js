@@ -10,10 +10,10 @@ import { Editor } from 'draft-js';
 import './App.css';
 import { Flex, Block } from 'jsxstyle';
 import { Video } from './components/Video';
-import VideoInspector from './components/VideoInspector';
+import { VideoInspector } from './VideoInspector';
 import type { State, Action, Dispatch } from './types';
 import injectTapEventPlugin from 'react-tap-event-plugin';
-import { open as openVideoInspector } from './actions/videoInspector';
+import { open as openVideoInspector } from './VideoInspector/actions';
 
 type AppStateProps = {
   rhymes: State,
@@ -59,7 +59,7 @@ VideoCard = connect(
 const VideoCardsPane = ({word, justifyContent='flex-start'}) =>
   <Block flexGrow={2} width="100px">
     <Flex flexWrap="wrap" textAlign="left" justifyContent={justifyContent}>
-      {word ? word.instances.map((wordInstance, i) => // $FlowFixMe
+      {word ? word.instances.map((wordInstance, i) =>
         <VideoCard key={[word.str, i]} word={wordInstance} />
       ) : null}
     </Flex>

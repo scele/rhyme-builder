@@ -1,9 +1,16 @@
 // @flow
 
 import { EditorState, ContentState } from 'draft-js';
-import { flow, keys, values, filter, map, flatten, mapValues, find, orderBy, uniqBy, take, zipObject } from 'lodash/fp';
-import type { State, Action } from '../actions/videoInspector';
-import { OPEN, CLOSE, SET_EDITOR_STATE } from '../actions/videoInspector';
+import { OPEN, CLOSE, SET_EDITOR_STATE } from './actions';
+
+import type { Action } from './actions';
+import type { Video } from '../types';
+
+export type State = {
+  video: Video,
+  editorState: Object, // TODO
+  open: boolean,
+};
 
 // $FlowFixMe
 const initialState: State = {

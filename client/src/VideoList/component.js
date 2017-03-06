@@ -4,15 +4,21 @@ import React from 'react';
 import { connect } from 'react-redux';
 import { Flex, Block, InlineBlock } from 'jsxstyle';
 import { Video as VideoComponent } from '../components/Video';
-import type { State, Dispatch } from '../types';
 import Paper from 'material-ui/Paper';
 import FlatButton from 'material-ui/FlatButton';
 import TextField from 'material-ui/TextField';
 import Avatar from 'material-ui/Avatar';
 import Chip from 'material-ui/Chip';
+import { VideoInspector } from '../VideoInspector';
+
+// Actions
+import { open as openVideoInspector } from '../VideoInspector/actions';
+import { setFilter } from './actions';
 import { saveVideo } from '../actions';
-import { open as openVideoInspector } from '../actions/videoInspector';
-import VideoInspector from './VideoInspector';
+
+// Types
+import type { Dispatch as ReduxDispatch } from 'redux';
+import type { State } from './types';
 import type { Video } from '../types';
 
 type VideoListStateProps = {
@@ -22,6 +28,7 @@ type VideoListStateProps = {
 type VideoListDispatchProps = {
   onVideoModified: Video => any,
   openVideoInspector: Video => any,
+  onFilterChange: string => any,
 };
 
 type VideoListProps = VideoListStateProps & VideoListDispatchProps;
@@ -66,12 +73,13 @@ class EditVideoCard extends React.Component {
   }
 };
 
-let VideoList = ({ state, onVideoModified, openVideoInspector }: VideoListProps) => (
+let VideoList = ({ state, onVideoModified, openVideoInspector, onFilterChange }: VideoListProps) => (
   <div className="App">
     <div className="App-header">
       <h2>Rhyme Builder</h2>
     </div>
     <Block>
+      <TextField value={state.filter} onChange={e => onFilterChange(e.target.value)} hintText="Search videos" />
       {state.filteredVideos.map(video =>
         <EditVideoCard video={video} key={video.video} onVideoModified={onVideoModified} openVideoInspector={x => openVideoInspector(video)} />
       )}
@@ -81,10 +89,11 @@ let VideoList = ({ state, onVideoModified, openVideoInspector }: VideoListProps)
 );
 
 VideoList = connect(
-  (state): VideoListStateProps => ({ state: state.rhymes }),
-  (dispatch: Dispatch): VideoListDispatchProps => ({
+  (state): VideoListStateProps => ({ state: state.videoList }),
+  (dispatch: ReduxDispatch<any>): VideoListDispatchProps => ({
     onVideoModified: video => saveVideo(video)(dispatch),
     openVideoInspector: video => openVideoInspector(video)(dispatch),
+    onFilterChange: filter => setFilter(filter)(dispatch),
   })
 )(VideoList);
 

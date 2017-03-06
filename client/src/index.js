@@ -14,7 +14,7 @@ import MuiThemeProvider from 'material-ui/styles/MuiThemeProvider';
 
 // Application
 import App from './App';
-import VideoList from './components/VideoList';
+import VideoList from './VideoList/component';
 import './index.css';
 import rootReducer from './reducers';
 import { loadData } from './actions';

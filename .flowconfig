@@ -6,5 +6,7 @@
 ./client/node_modules/draft-js
 
 [ignore]
-.*/node_modules/draft-js/lib/.*
+.*/client/node_modules/draft-js/lib/expandRangeToStartOfLine.js.flow
+.*/client/node_modules/draft-js/lib/findRangesImmutable.js.flow
+.*/client/node_modules/draft-js/lib/getSafeBodyFromHTML.js.flow
 .*/node_modules/google-cloud/.*

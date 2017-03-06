@@ -10,7 +10,7 @@ import { flow, filter, orderBy, take, uniqBy, map, mapValues, reverse, transform
 import GoogleCloud from 'google-cloud';
 import type { $Request, $Response } from 'express';
 
-import type { WordInstance, Video, ServerWordMap, ServerVideoMap } from '../client/src/types';
+import type { WordInstance, Video, ServerWordMap, ServerRhymeMap, ServerVideoMap } from '../client/src/types';
 
 const app = express();
 
@@ -138,7 +138,7 @@ const parseVideo = (video: Video): Video => {
   };
 };
 
-const buildRhymes = (words: ServerWordMap) => {
+const buildRhymes = (words: ServerWordMap): ServerRhymeMap => {
   let rhymes = {};
   for (let word in words) {
     for (let i = 0; i < word.length; i++) {
@@ -159,7 +159,7 @@ const buildRhymes = (words: ServerWordMap) => {
     orderBy(x => x.rhyme.length, 'desc'),
     uniqBy(x => x.words.join('-')),
   )(rhymes);
-  return zipObject(map(x => x.rhyme)(rhymes), rhymes);
+  return zipObject(map(x => x.rhyme)(rhymes))(rhymes);
 };
 
 // Mutable state.

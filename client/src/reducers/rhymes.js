@@ -1,7 +1,8 @@
 // @flow
 
 import { EditorState } from 'draft-js';
-import { flow, keys, values, filter, map, flatten, mapValues, find, orderBy, uniqBy, take, zipObject } from 'lodash/fp';
+import { flow, keys, values, filter, map, flatten, mapValues, orderBy, uniqBy, take } from 'lodash/fp';
+import { findOrOnly } from '../fp';
 import type { State, Action, Word, RhymingWord, WordInstance } from '../types';
 
 const initialState: State = {
@@ -73,7 +74,7 @@ getWord = (state: State, expandRhymes: boolean) => (wordStr: string): Word =>
     rhymingWords: expandRhymes ? getRhymingWords(state)(wordStr) : [],
   });
 
-const findOrOnly = (predicate) => (list) => list.length === 1 ? list[0] : find(predicate)(list);
+//const findOrOnly = (predicate) => (list) => list.length === 1 ? list[0] : find(predicate)(list);
 
 const getCurrentWords = (state: State) =>
   map(getWord(state, true))(state.editor.currentWord ? getStartingWords(state.editor.currentWord, state.words) : []);
