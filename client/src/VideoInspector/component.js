@@ -25,6 +25,12 @@ type DispatchProps = {
 };
 type Props = StateProps & DispatchProps;
 
+const editorStyleMap = {
+  currentRhyme: {
+    backgroundColor: 'rgba(0, 255, 255, 1.0)',
+  },
+};
+
 let VideoInspectorDialog = ({ state, onClose, onEditorStateChange }: Props) => {
   const actions = [
     <FlatButton
@@ -54,7 +60,7 @@ let VideoInspectorDialog = ({ state, onClose, onEditorStateChange }: Props) => {
           <source src={state.video.lores} type='video/mp4'/>
         </video>
         <InlineBlock marginLeft={640} width={640} height={360} padding={20}>
-          <Editor editorState={state.editorState} onChange={onEditorStateChange} />
+          <Editor editorState={state.editorState} onChange={onEditorStateChange} customStyleMap={editorStyleMap} />
         </InlineBlock>
       </Dialog>
     </div>
