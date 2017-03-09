@@ -8,7 +8,7 @@ import FlatButton from 'material-ui/FlatButton';
 import { Editor } from 'draft-js';
 
 // Actions
-import { close, setEditorState } from './actions';
+import { close, setEditorState, highlightTextAt } from './actions';
 import { saveVideo } from '../actions';
 
 // Types
@@ -22,6 +22,7 @@ type StateProps = {
 type DispatchProps = {
   onEditorStateChange: Function,
   onClose: ?Video => any,
+  onSeeked: number => any,
 };
 type Props = StateProps & DispatchProps;
 
@@ -31,7 +32,7 @@ const editorStyleMap = {
   },
 };
 
-let VideoInspectorDialog = ({ state, onClose, onEditorStateChange }: Props) => {
+let VideoInspectorDialog = ({ state, onClose, onEditorStateChange, onSeeked }: Props) => {
   const actions = [
     <FlatButton
       label="Cancel"
@@ -56,7 +57,7 @@ let VideoInspectorDialog = ({ state, onClose, onEditorStateChange }: Props) => {
         autoScrollBodyContent={true}
         contentStyle={{width: 1400, maxWidth: 'none'}}
       >
-        <video preload="metadata" style={{width: 640, position: 'fixed'}} controls="controls">
+        <video preload="metadata" style={{width: 640, position: 'fixed'}} controls="controls" seeked={e => onSeeked(e.target.currentTime)}>
           <source src={state.video.lores} type='video/mp4'/>
         </video>
         <InlineBlock marginLeft={640} width={640} height={360} padding={20}>
@@ -77,6 +78,7 @@ VideoInspectorDialog = connect(
       close()(dispatch);
     },
     onEditorStateChange: (editorState) => setEditorState(editorState)(dispatch),
+    onSeeked: (time) => highlightTextAt(time)(dispatch)
   })
 )(VideoInspectorDialog);
 

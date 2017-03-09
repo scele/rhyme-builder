@@ -1,15 +1,17 @@
 // @flow
 
 import { EditorState, ContentState, SelectionState, Modifier } from 'draft-js';
-import { OPEN, CLOSE, SET_EDITOR_STATE } from './actions';
+import { OPEN, CLOSE, SET_EDITOR_STATE, HIGHLIGHT_TEXT_AT } from './actions';
 
 import type { Action } from './actions';
 import type { Video } from '../types';
+import type { EditorStateType } from 'draft-js';
 
 export type State = {
   video: Video,
   editorState: Object, // TODO
   open: boolean,
+  time: number,
 };
 
 // $FlowFixMe
@@ -28,7 +30,15 @@ const execLast = (regex, str) => {
   }
 };
 
-const format = (editorState) => {
+const getTimeFromSelection = (editorState: EditorStateType): number => {
+
+};
+
+const selectTime = (time: number, editorState: EditorStateType): EditorStateType => {
+
+};
+
+const format = (time: number, editorState: EditorStateType): EditorStateType => {
   const content = editorState.getCurrentContent();
   const selection = editorState.getSelection();
   const block = content.getFirstBlock();
@@ -105,7 +115,8 @@ export default function videoInspector(state: State = initialState, action: Acti
       return {
         open: true,
         video: action.video,
-        editorState: format(EditorState.createWithContent(ContentState.createFromText(action.video.text))),
+        time: action.video.firstAnnotationTime,
+        editorState: format(action.video.firstAnnotationTime, EditorState.createWithContent(ContentState.createFromText(action.video.text))),
       };
     case CLOSE:
       return {
@@ -119,8 +130,14 @@ export default function videoInspector(state: State = initialState, action: Acti
           ...state.video,
           text: action.editorState.getCurrentContent().getPlainText(),
         },
-        editorState: format(action.editorState),
+        editorState: format(state.time, action.editorState),
       };
+    case HIGHLIGHT_TEXT_AT:
+      return {
+        ...state,
+        time: action.time,
+        editorState: format(action.time, state.editorState),
+      }
     default:
       return state;
   }

@@ -7,7 +7,7 @@ export class Video extends React.Component {
   videoElement: HTMLVideoElement;
   state: { paused: boolean };
 
-  constructor(props: {src: string, currentTime: number}) {
+  constructor(props: {src: string, currentTime: number, onSeeked: ?Function}) {
     super(props);
     this.state = {
       paused: true,
@@ -19,15 +19,19 @@ export class Video extends React.Component {
   componentDidUpdate() {
     this.videoElement.currentTime = this.props.currentTime || 0;
   }
-  onClick() {
+  onClick = () => {
     this.setState({ paused: !this.videoElement.paused });
     this.videoElement.paused ? this.videoElement.play() : this.videoElement.pause();
+  }
+  onSeeked = () => {
+    if (this.props.onSeeked)
+      this.props.onSeeked(this.videoElement.currentTime);
   }
   render() {
     return (
       <InlineBlock position="relative" cursor="pointer" {...this.props}>
-        <video preload="metadata" style={{width:'100%'}}
-              onClick={this.onClick.bind(this)} ref={c => this.videoElement = c}>
+        <video preload="metadata" style={{width:'100%'}} seeked={this.onSeeked}
+              onClick={this.onClick} ref={c => this.videoElement = c}>
           <source src={this.props.src} type='video/mp4'/>
         </video>
         { this.state.paused
