@@ -29,7 +29,7 @@ const allowCrossDomain = (req: $Request, res: $Response, next) => {
   next();
 };
 app.use(allowCrossDomain);
-app.use(bodyParser.json());
+app.use(bodyParser.json({limit: '5mb'}));
 app.set('json spaces', 2);
 
 const parseVideo = (video: Video): Video => {
@@ -246,7 +246,22 @@ app.post('/api/video/:videoId', (req: $Request, res: $Response) => {
       title: userVideo.title,
       text: userVideo.text,
     };
-    store.update({key: key, data: newVideo}).then(data => {
+    const updateRequest = [
+      {
+        name: 'title',
+        value: userVideo.title,
+      },
+      {
+        name: 'video',
+        value: storedVideo.video,
+      },
+      {
+        name: 'text',
+        value: userVideo.text,
+        excludeFromIndexes: true,
+      },
+    ];
+    store.update({key: key, data: updateRequest}).then(data => {
       console.log('Saved video: ', data[0]);
       updateState(state, [newVideo]);
       res.json(state.videos[key.id]);

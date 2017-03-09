@@ -15,7 +15,10 @@ const initialState: State = {
 const filterVideos = (state: State): Video[] => {
   return flow(
     values,
-    filter((video: Video) => video.text.includes(state.filter) || video.title.includes(state.filter)),
+    // TODO: Better search
+    filter((video: Video) => video.speakers.join(' ').toLowerCase().includes(state.filter.toLowerCase())
+                             || video.title.toLowerCase().includes(state.filter.toLowerCase())
+                             || video.video.toLowerCase().includes(state.filter.toLowerCase())),
     take(10)
   )(state.videos);
 };
