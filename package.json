@@ -4,7 +4,7 @@
   "description": "",
   "main": "src/server.js",
   "scripts": {
-    "start": "./node_modules/.bin/babel-node server.js",
+    "start": "node build/server.js",
     "flow": "flow",
     "build": "node node_modules/babel-cli/bin/babel.js src --out-dir build --source-maps",
     "test": "echo \"Error: no test specified\" && exit 1"

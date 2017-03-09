@@ -225,7 +225,7 @@ store.runQuery(store.createQuery('Video')).then(results => {
 const asObject = (x: mixed): Object => typeof(x) === 'object' ? (x || {}) : {};
 
 app.use('/', express.static('client/build'));
-app.use('/data', express.static('data'));
+app.use('/videos', express.static('client/build'));
 app.get('/api/rhymes', (req: $Request, res: $Response) => {
   res.json(state.rhymes);
 });
